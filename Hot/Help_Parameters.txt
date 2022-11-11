@@ -1,0 +1,6 @@
+﻿[/install | --install] | [/uninstall | --uninstall] | /helpconfig
+install   | --install    -> install as system service
+uninstall | -- uninstall -> uninstall the service
+helpconfig               -> list configurations files search paths
+
+/Logging:Console:LogLevel:Default=Debug  -> show logs

@@ -1,0 +1,76 @@
+﻿Ajustes do arquivo do projeto:
+------------------------------
+	<PropertyGroup>
+		<Title>Título da aplicação</Title>
+		<Description>Descrição do serviço da aplicação - é a que será usada em services com o serviço instalado.</Description>
+		<AssemblyVersion>1.0.*</AssemblyVersion>
+		<Deterministic>false</Deterministic>
+		<Version>$(VersionPrefix)</Version>
+		<FileVersion>$(AssemblyVersion)</FileVersion>
+	  <UserSecretsId>Nome do user-secrets da aplicação</UserSecretsId>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="appsettings.json" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Include="..\..\Hot\Hot\_HOT_globals.cs" Link="_HOT_globals.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="appsettings.json" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Hot\Hot\Hot.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="appsettings.Development.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+------------------------------
+
+Help_Parameters.txt -> incorporado na DLL (texto padrão).
+   também procura por Help_Paramenters.txt incorporado na aplicação
+
+
+appsettings.json:
+-----------------
+appsettings.json na biblioteca Hot:
+  -> é apenas exemplo do appsettings a ser usado na aplicação
+
+appsettings.json da aplicação:
+  -> incorporado na aplicação.
+
+_HOT_globals.cs:
+----------------
+adicionar o arquivo "vinculado" ao projeto da aplicação, para incluir todos os "using" para uso da biblioteca
+
+
+appsettings.Development.json:
+-----------------------------
+Definir a variável de ambiente nas propriedades de depuração da aplicação:
+DOTNET_ENVIRONMENT = Development
+
+(exemplo de appsettings.Development.json)
+{
+  "Logging": {
+    "Console": {
+      "IncludeScopes": true,
+      "LogLevel": {
+        "Default": "Debug"
+        //        "Microsoft": "Warning",
+        //        "Microsoft.Hosting": "Warning"
+      }
+    },
+    "email": {
+      "Level": "None"
+    }
+  }
+}
+
+
