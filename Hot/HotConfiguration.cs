@@ -74,7 +74,11 @@
                     // 2 - variável de ambiente
                     // 3 - linha de comando
                     string env = Environments.Production;
+
+                    // **** Linha abaixo criada com configuração 'HARDCODDED'. Deve ser excluída.
                     env = Environment.MachineName.StartsWith("RS-DS") ? Environments.Development : env;
+                    // ****
+
                     env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? env;
                     var ee = Environment.GetCommandLineArgs().Where((s) => s.ToUpper().StartsWith("ENVIRONMENT"));
                     if (ee.Count() > 0) {
