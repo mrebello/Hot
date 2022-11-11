@@ -111,7 +111,7 @@ exemplo de uma **aplicação** de httpserver:
 
     internal class Program : HttpServer {
         public static void Main(string[] args) {
-            MainDefault<Program>(inicia);
+            MainDefault<Program>();
         }
 
         public override void Process(HttpListenerContext context) {
