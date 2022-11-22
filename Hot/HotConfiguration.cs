@@ -113,7 +113,7 @@
 
                     if (env == Environments.Development) {
                         configSearchPath += "AddSecrets adicionado.";
-                        confBuilder.AddUserSecrets("Debug", true);
+                        confBuilder.AddUserSecrets(asm_resource, true);
                     }
                     _configuration = confBuilder.Build();
 

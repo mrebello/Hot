@@ -33,6 +33,24 @@ namespace Hot.Extensions {
         }
 
         /// <summary>
+        /// Return the first 'lenght' caracters of string. Return "" on null.
+        /// </summary>
+        public static string Left(this string s, int lenght) {
+            if (s == null) return "";
+            if (s.Length <= lenght) return s;
+            return s.Substring(0, lenght);
+        }
+
+        /// <summary>
+        /// Return the last 'lenght' caracters of string. Return "" on null.
+        /// </summary>
+        public static string Right(this string s, int lenght) {
+            if (s == null) return "";
+            if (s.Length <= lenght) return s;
+            return s.Substring(s.Length-lenght, lenght);
+        }
+
+        /// <summary>
         /// Return the string after the delimiter. If not delimiter found, return ""
         /// </summary>
         public static string After(this string s, string delimiter) {
@@ -55,12 +73,13 @@ namespace Hot.Extensions {
         /// Return the string splitted in before the delimiter and after delimiter. If not delimiter, return the entire string in before.
         /// </summary>
         public static (string before, string after) SplitIn2(this string s, string delimiter) {
-            if (s == null) return ("","");
-            if (delimiter == null) return (s,"");
+            if (s == null) return ("", "");
+            if (delimiter == null) return (s, "");
             int x = s.IndexOf(delimiter);
             if (x >= 0) {
                 return (s.Substring(0, x), s.Substring(x + delimiter.Length));
-            } else return (s,"");
+            }
+            else return (s, "");
         }
 
         /// <summary>
@@ -74,7 +93,7 @@ namespace Hot.Extensions {
         /// <returns></returns>
         public static string Item(this string s, int index, string delimiter = ";") {
             if (s == null) return "";
-            if (delimiter == null) return index==1 ? s : "";
+            if (delimiter == null) return index == 1 ? s : "";
             var i = s.Split(delimiter, StringSplitOptions.None);
             if (index < 0) {
                 return (-index) <= i.Length ? i[i.Length + index] : "";

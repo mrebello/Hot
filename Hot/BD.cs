@@ -20,7 +20,7 @@
             if (String.IsNullOrEmpty(connectionString)) {
                 throw new ConfigurationErrorsException($"ConnectionStrings '{name}' deve estar configurado em appsettings.json.");
             }
-            
+
             if (connectionString.Contains("%(")) {    // se contém campo de configuração para senha em secrets, faz a troca
                 (string antes, string depois) = connectionString.SplitIn2("%(");
                 (string nome, depois) = depois.SplitIn2(")%");
@@ -39,6 +39,7 @@
             sqlConnection = new SqlConnection(connectionString);
         }
 
+        private readonly object OpenConnection_lock = new object();
         /// <summary>
         /// Abre uma conexão, caso não esteja aberta e pronta (ConnectionState == Open).
         /// Gera exceção caso não consiga abrir.
@@ -48,26 +49,28 @@
         /// <exception cref="Exception"></exception>
         public bool OpenConnection() {
             int tentativas = 5;
-            while (true) {
-                try {
-                    if (sqlConnection.State == ConnectionState.Open) {
-                        return true;
+            lock (OpenConnection_lock) {
+                while (true) {
+                    try {
+                        if (sqlConnection.State == ConnectionState.Open) {
+                            return true;
+                        }
+                        if (sqlConnection.State == ConnectionState.Broken) sqlConnection.Close();
+                        sqlConnection.Open();    // se não abrir, vai pro catch
+                        break;
                     }
-                    if (sqlConnection.State == ConnectionState.Broken) sqlConnection.Close();
-                    sqlConnection.Open();    // se não abrir, vai pro catch
-                    break;
-                }
-                catch (Exception e) {
-                    int er = (e as SqlException)?.Number ?? 0;
-                    if (er == 4060 || er == 18456) tentativas = 1; // Gera o erro imediatamente para falhas de logon
-                    if (--tentativas == 0) {
-                        string m = String.Format("Erro ao tentar abrir conexão: {0}. connection string: {1} Exception: {2}", e.Message, sqlConnection.ConnectionString, e);
-                        L.LogError(e, m);
-                        throw new Exception(m, e);
-                    }
-                    else {
-                        L.LogWarning(e.Message + " em: " + e.StackTrace);
-                        Thread.Sleep(1000);
+                    catch (Exception e) {
+                        int er = (e as SqlException)?.Number ?? 0;
+                        if (er == 4060 || er == 18456) tentativas = 1; // Gera o erro imediatamente para falhas de logon
+                        if (--tentativas == 0) {
+                            string m = String.Format("Erro ao tentar abrir conexão: {0}. connection string: {1} Exception: {2}", e.Message, sqlConnection.ConnectionString, e);
+                            L.LogError(e, m);
+                            throw new Exception(m, e);
+                        }
+                        else {
+                            L.LogWarning(e.Message + " em: " + e.StackTrace);
+                            Thread.Sleep(1000);
+                        }
                     }
                 }
             }
@@ -121,7 +124,7 @@
         /// <param name="SQL"></param>
         /// <param name="obj"></param>
         /// <returns></returns>
-        public SqlCommand SQLCmd(SqlTransaction? transaction, string SQL, params object[] obj) {
+        public SqlCommand SQLCommand(SqlTransaction? transaction, string SQL, params object[] obj) {
             var cmd = new SqlCommand(SQL, sqlConnection, transaction);
             int c = 1;
             foreach (var o in obj) {
@@ -154,6 +157,25 @@
 
 
         /// <summary>
+        /// Monta um SqlCommand a partir do SQL e parâmetros, com timeout setado no comando. Os parâmetros são numerados a partir de 1.
+        /// <code>
+        /// SqlCmd(   connection, "SELECT @1 + @2", 1, 2 );
+        /// </code>
+        /// </summary>
+        /// <param name="SQL"></param>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public SqlDataReader SQL(int timeout_seg, string SQL, params object[] obj) {
+            using (SqlCommand c = SQLCommand(null, SQL, obj)) {
+                OpenConnection();
+                L.LogInformation(() => Log.Msg(LogInfo(c)));
+                c.CommandTimeout = timeout_seg;
+                return c.ExecuteReader();
+            }
+        }
+
+
+        /// <summary>
         /// Monta um SqlCommand a partir do SQL e parâmetros. Os parâmetros são numerados a partir de 1.
         /// <code>
         /// SqlCmd( connection, "SELECT @1 + @2", 1, 2 );
@@ -163,7 +185,7 @@
         /// <param name="obj"></param>
         /// <returns></returns>
         public SqlDataReader SQL(string SQL, params object[] obj) {
-            using (SqlCommand c = SQLCmd(null, SQL, obj)) {
+            using (SqlCommand c = SQLCommand(null, SQL, obj)) {
                 OpenConnection();
                 L.LogInformation(() => Log.Msg(LogInfo(c)));
                 return c.ExecuteReader();
@@ -180,7 +202,7 @@
         /// <param name="obj"></param>
         /// <returns></returns>
         public object SQLScalar(string SQL, params object[] obj) {
-            using (SqlCommand c = SQLCmd(null, SQL, obj)) {
+            using (SqlCommand c = SQLCommand(null, SQL, obj)) {
                 OpenConnection();
                 L.LogInformation(() => Log.Msg(LogInfo(c)));
                 return c.ExecuteScalar();
@@ -197,14 +219,14 @@
         /// <param name="obj"></param>
         /// <returns></returns>
         public int SQLCmd(string SQL, params object[] obj) {
-            using (SqlCommand c = SQLCmd(null, SQL, obj)) {
+            using (SqlCommand c = SQLCommand(null, SQL, obj)) {
                 OpenConnection();
                 L.LogInformation(() => Log.Msg(LogInfo(c)));
                 return c.ExecuteNonQuery();
             }
         }
 
-        
+
 
         public BDTransaction Transaction() {
             return new BDTransaction() {
@@ -220,7 +242,7 @@
 
             public SqlDataReader SQL(string SQL, params object[] obj) {
                 ArgumentNullException.ThrowIfNull(bd, "BD nulo em transação.");
-                using (SqlCommand c = bd.SQLCmd(sqlTransaction, SQL, obj)) {
+                using (SqlCommand c = bd.SQLCommand(sqlTransaction, SQL, obj)) {
                     bd.OpenConnection();
                     bd.L.LogInformation(() => Log.Msg(LogInfo(c)));
                     return c.ExecuteReader();
@@ -229,7 +251,7 @@
 
             public object SQLScalar(string SQL, params object[] obj) {
                 ArgumentNullException.ThrowIfNull(bd, "BD nulo em transação.");
-                using (SqlCommand c = bd.SQLCmd(null, SQL, obj)) {
+                using (SqlCommand c = bd.SQLCommand(null, SQL, obj)) {
                     bd.OpenConnection();
                     bd.L.LogInformation(() => Log.Msg(LogInfo(c)));
                     return c.ExecuteScalar();
@@ -238,7 +260,7 @@
 
             public int SQLCmd(string SQL, params object[] obj) {
                 ArgumentNullException.ThrowIfNull(bd, "BD nulo em transação.");
-                using (SqlCommand c = bd.SQLCmd(null, SQL, obj)) {
+                using (SqlCommand c = bd.SQLCommand(null, SQL, obj)) {
                     bd.OpenConnection();
                     bd.L.LogInformation(() => Log.Msg(LogInfo(c)));
                     return c.ExecuteNonQuery();

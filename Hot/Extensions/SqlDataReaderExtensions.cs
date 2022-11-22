@@ -18,5 +18,24 @@ namespace Hot.Extensions {
             return dt.Rows.Count>0 ? dt.Rows[0] : null;
         }
 
+        /// <summary>
+        /// Devolve todos os dados em uma string. Devolve "" caso não haja dados.
+        /// </summary>
+        /// <param name="r"></param>
+        /// <returns></returns>
+        public static string ToText(this SqlDataReader r, string column_delimiter = "\t", string line_delimiter = "\r\n") {
+            StringBuilder s = new StringBuilder();
+            int nf = r.FieldCount;
+            while (r.Read()) {
+                for(int f = 0; f<nf; f++) {
+                    s.Append(r[f].ToString());
+                    if (f<nf-1) { s.Append(column_delimiter); }
+                }
+                s.Append(line_delimiter);
+            }
+            r.Close();
+            return s.ToString();
+        }
+
     }
 }
