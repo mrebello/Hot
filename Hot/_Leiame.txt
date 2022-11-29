@@ -1,4 +1,15 @@
-﻿Ajustes do arquivo do projeto:
+﻿Bugs conhecidos:
+----------------
+Nome da aplicação/executável vem errado quando chamado via "dotnet xxx"
+
+
+To-do:
+------
+Níveis de log por categoria para email e file
+
+
+
+Ajustes do arquivo do projeto:
 ------------------------------
 	<PropertyGroup>
 		<Title>Título da aplicação</Title>

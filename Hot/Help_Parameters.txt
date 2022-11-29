@@ -1,6 +1,18 @@
-﻿[/install | --install] | [/uninstall | --uninstall] | /helpconfig
-install   | --install    -> install as system service
-uninstall | -- uninstall -> uninstall the service
-helpconfig               -> list configurations files search paths
+﻿/? | -h | -H | -? | --help | /help    -> show this help
+
+/install    | --install        -> install as system service
+/uninstall  | --uninstall      -> uninstall the service
+
+/helpconfig | --helpconfig     -> list configurations files search paths
+
+-d | --daemon | /d | /daemon   -> run as service
+
+-v | --version | /v | /version -> show version
+
+Configuration parameters are accept in many forms. (/helpconfig)
+
+In command line, use ':':
 
 /Logging:Console:LogLevel:Default=Debug  -> show logs
+
+On linux, a BUG in .net take only after 2nd parameter. Put any thing on 2nd parameter

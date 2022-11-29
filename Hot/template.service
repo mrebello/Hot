@@ -1,0 +1,13 @@
+﻿chmod u+x xxxx
+ln -s /etc/systemd/system/xxxxx.service xxxxx.service
+
+[Unit]
+Description=Linux server teste
+After=network.target network-online.target nss-lookup.target
+
+[Service]
+Type=notify
+ExecStart=/opt/Iprejun/Linux_ServerIprejun --daemon
+
+[Install]
+WantedBy=multi-user.target

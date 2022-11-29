@@ -63,6 +63,7 @@ namespace Hot {
                         if (IsWindows) {
                             logging.AddEventLog(new EventLogSettings() { SourceName = Config["AppName"] }); ;
                         }
+                        logging.AddFileLogger();
                         logging.AddemailLogger();
                         logging.Configure((LoggerFactoryOptions options) => options.ActivityTrackingOptions = ActivityTrackingOptions.SpanId | ActivityTrackingOptions.TraceId | ActivityTrackingOptions.ParentId);
                     });

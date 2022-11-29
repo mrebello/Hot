@@ -21,11 +21,7 @@
                 throw new ConfigurationErrorsException($"ConnectionStrings '{name}' deve estar configurado em appsettings.json.");
             }
 
-            if (connectionString.Contains("%(")) {    // se contém campo de configuração para senha em secrets, faz a troca
-                (string antes, string depois) = connectionString.SplitIn2("%(");
-                (string nome, depois) = depois.SplitIn2(")%");
-                connectionString = antes + Config[nome] + depois;
-            }
+            connectionString = connectionString.ReplaceConf();
 
             if (isSqlserver) {
                 if (!connectionString.Contains("MultipleActiveResultSets", StringComparison.OrdinalIgnoreCase)) {

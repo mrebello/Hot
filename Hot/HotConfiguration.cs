@@ -29,12 +29,12 @@
         /// </summary>
         private static Assembly asm_resource;
 #pragma warning restore CS8618
-        
+
         /// <summary>
         /// Devolve o Assembly da aplicação (trata publicação em arquivo único)
         /// </summary>
         public Assembly GetAsmRessource { get => asm_resource; }
-        
+
         /// <summary>
         /// Retorna com stream incorporado dentro do assembler, adicionando o pré-nome do assembler.
         /// </summary>
@@ -62,6 +62,7 @@
                     //var executable_fullname = System.Environment.GetCommandLineArgs()[0];  // devolve o nome da DLL para aplicativos empacotados em arquivo único
                     var executable_fullname = System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName;
                     var executable_name = Path.GetFileNameWithoutExtension(executable_fullname);
+                    var executable_path = Path.GetDirectoryName(System.Environment.GetCommandLineArgs()[0]) + Path.DirectorySeparatorChar;
                     //Assembly asm_executing = System.Reflection.Assembly.GetExecutingAssembly();
                     // Ao invés do acima, pega o frame mais alto do stackFrame atual
                     var stackFrame = new System.Diagnostics.StackTrace(1);
@@ -96,17 +97,17 @@
                     configSearchPath += "- environment variables started with DOTNET_" + Environment.NewLine;
                     confBuilder.AddEnvironmentVariables(prefix: "DOTNET_");
 
-                    configSearchPath += "- appsettings.json  (current directory)" + Environment.NewLine;
-                    confBuilder.AddJsonFile("appsettings.json", true, true);
+                    configSearchPath += "- " + executable_path + "appsettings.json" + Environment.NewLine;
+                    confBuilder.AddJsonFile(executable_path + "appsettings.json", true, true);
 
                     configSearchPath += "- /etc/" + asm_name + ".conf" + Environment.NewLine;
                     confBuilder.AddJsonFile("/etc/" + asm_name + ".conf", true, true);  // em /etc pega pelo nome 'formal' do assembler
 
-                    configSearchPath += "- " + executable_name + ".conf  (current directory)" + Environment.NewLine;
-                    confBuilder.AddJsonFile(executable_name + ".conf", true, true);
+                    configSearchPath += "- " + executable_path + executable_name + ".conf" + Environment.NewLine;
+                    confBuilder.AddJsonFile(executable_path + executable_name + ".conf", true, true);
 
-                    configSearchPath += "- appsettings." + env + ".json  (current directory)" + Environment.NewLine;
-                    confBuilder.AddJsonFile($"appsettings.{env}.json", true, true);
+                    configSearchPath += "- " + $"{executable_path}appsettings.{env}.json" + Environment.NewLine;
+                    confBuilder.AddJsonFile($"{executable_path}appsettings.{env}.json", true, true);
 
                     configSearchPath += "- command line parameters" + Environment.NewLine;
                     confBuilder.AddCommandLine(Environment.GetCommandLineArgs());
@@ -130,6 +131,7 @@
                     }
                     _configuration["Version"] = asm_resource.GetName().Version?.ToString();
                     _configuration["ExecutableFullName"] = executable_fullname;
+                    _configuration["ExecutablePath"] = executable_path;
 
 #if NETCOREAPP1_0_OR_GREATER
                     _configuration["IsWindows"] = System.OperatingSystem.IsWindows().ToString();

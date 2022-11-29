@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using System.Net;
 using System.Runtime.Versioning;
 
-namespace Hot.emailLogger {
+namespace Hot.Loggers {
     public class emailLoggerConfiguration {
         public string Host { get; set; } = "";
         public int Port { get; set; }
@@ -35,7 +35,7 @@ namespace Hot.emailLogger {
         void ILogger.Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) {
             if (!this.IsEnabled(logLevel)) return;
 
-            if (eventId == EventIdErro_ao_enviar_email) return;   // Evita redundância na chamada.
+            if (eventId == EventIdErro_ao_enviar_email) return;   // Evita recursividade na chamada.
 
             var config = _getCurrentConfig();
             try {
@@ -73,7 +73,7 @@ State: {state?.ToString()}";
             catch (Exception e) {
                 Log.LogError(EventIdErro_ao_enviar_email, e, "Erro ao tentar enviar email de erro.");
             }
-            Console.WriteLine($"Estou logando: {formatter(state, exception)}");
+            //Console.WriteLine($"Estou logando: {formatter(state, exception)}");
 
         }
     }

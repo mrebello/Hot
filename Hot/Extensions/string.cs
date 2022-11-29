@@ -278,5 +278,20 @@ namespace Hot.Extensions {
         public static bool IsEmpty(this string? s) => String.IsNullOrWhiteSpace(s);
 
 
-    }
+        /// <summary>
+        /// Return string with all '%(xxxxx)%' replaced with Conf["xxxxx"]
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        public static string ReplaceConf(this string s) {
+            while (s.Contains("%("))   {    // se contém campo de configuração, faz a troca
+                (string antes, string depois) = s.SplitIn2("%(");
+                (string nome, depois) = depois.SplitIn2(")%");
+                s = antes + Config[nome] + depois;
+            }
+            return s;
+        }
+
+
+}
 }

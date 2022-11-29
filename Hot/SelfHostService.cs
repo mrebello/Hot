@@ -57,6 +57,8 @@ namespace Hot {
 ";
             Log.LogInformation(infos);
 
+            bool daemon = false;
+
             if (Environment.UserInteractive) {
                 if (new[] { "/?", "-h", "-H", "-?", "--help", "/help" }.Any(args.Contains)) {
                     execute = false;
@@ -73,9 +75,9 @@ namespace Hot {
                     #region Install // Faz a instalação do serviço
                     // faz a instalação como serviço
                     execute = false;
-                    
+
                     Console.WriteLine($"Install service_name: {service_name}");
-                    
+
                     Log.LogInformation($"Install\r\n service_name: {service_name}\r\n display_name: {display_name}\r\n descripton: {descripton}\r\n file: \"{Config["ExecutableFullName"]}\"");
 
                     if (OperatingSystem.IsWindows()) {
@@ -117,13 +119,20 @@ namespace Hot {
                     //new Thread(() => AutoUpdate()).Start();
                     AutoUpdate();
                 }
+                else if (new[] { "-v", "--version", "/v", "/version" }.Any(args.Contains)) {
+                    Console.WriteLine(Config["AppName"] + '\t' + Config["Version"]);
+                }
+            }
+
+            if (new[] { "/d", "/daemon", "-d", "--daemon" }.Any(args.Contains)) {
+                daemon = true;
             }
 
             //if (analisa_Parametros != null) analisa_Parametros(args);
             analisa_Parametros?.Invoke(args);
 
             if (execute) {
-                if (Environment.UserInteractive) {
+                if (!daemon && Environment.UserInteractive) {
                     host.RunAsync();
                     Console.WriteLine("De [Enter] para encerrar.");
                     Console.ReadLine();
@@ -217,7 +226,7 @@ namespace Hot {
                     }
                     catch (Exception) {
                     }
-                    if (v.Item(2,"\t") == version_me) {
+                    if (v.Item(2, "\t") == version_me) {
                         ok = true;
                         break;
                     }

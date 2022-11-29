@@ -160,6 +160,8 @@ namespace Hot {
                             msg += $"netsh http add urlacl url={s} user=xxxxxx" + Environment.NewLine;
                         }
                         L.LogError(msg);
+                    } else {
+                        L.LogError("Erro ao iniciar a escuta na porta.");
                     }
                 }
                 throw ex;
@@ -178,7 +180,8 @@ namespace Hot {
                     HttpListenerContext ct = listener.GetContext();
                     Task t = Task.Run(() => PreProcess(ct));               // usa task ao invés de thread para acelerar o processamento de respostas rápidas
                 }
-                catch (HttpListenerException e) when (e.ErrorCode == 995) {   // Operação de E/S anulada
+                catch (HttpListenerException e) when (e.ErrorCode == 995     // Operação de E/S anulada
+                                                   || e.ErrorCode == 500) {  // Listener closed 
                 }
                 catch (Exception e) {
                     Log.LogError(e, "Erro ao receber conexão.");

@@ -35,10 +35,12 @@
 
   <ItemGroup>
     <None Remove="Help_Parameters.txt" />
+    <None Remove="template.service" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Help_Parameters.txt" />
+    <EmbeddedResource Include="template.service" />
   </ItemGroup>
 
   <ItemGroup>
