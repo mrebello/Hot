@@ -1,5 +1,6 @@
 ﻿using System.Net.Http;
 using System.Net.Http.Headers;
+using static Hot.HotConfiguration;
 
 namespace Hot {
     public abstract class SelfHostedService : IHostedService {
@@ -9,11 +10,14 @@ namespace Hot {
 
         public delegate void Analisa_Parametros(string[] args);
 
+        /// <summary>
+        /// Rotina 'main' padrão para serviços. Chamar com
+        ///   MainDefault<xxx>( sub_inicia ); com xxx sendo o nome da classe do programa.
+        /// </summary>
+        /// <typeparam name="service"></typeparam>
+        /// <param name="analisa_Parametros">Parâmetro opcional com a sub para analizar os parâmetros de linha de comando específicos</param>
         public static void MainDefault<service>(Analisa_Parametros? analisa_Parametros = null) where service : class, IHostedService {
             string[] args = Environment.GetCommandLineArgs();
-
-            //var executable_name = Path.GetFileNameWithoutExtension(Process.GetCurrentProcess().MainModule!.FileName);
-            var asm_name = Config.GetAsmRessource.GetName().Name;
 
             var hostBuilder = new HostBuilder();
 
@@ -30,65 +34,73 @@ namespace Hot {
                 .UseWindowsService()
                 .Build();
 
-
             bool execute = true;
 
-            var assembly = Config.GetAsmRessource;
-            //string companyName = assembly.GetCustomAttribute<AssemblyCompanyAttribute>()?.Company ?? "";
-            string service_name = assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title ?? "";
-            string display_name = assembly.GetCustomAttribute<AssemblyProductAttribute>()?.Product ?? "";
-            string descripton = assembly.GetCustomAttribute<AssemblyDescriptionAttribute>()?.Description ?? "";
-            string filename = Config["AppName"];
-
-            string infos = $@"Infos:
-    Plataform = {Environment.OSVersion.Platform}
-    IsWindows = {Config["IsWindows"]}
-    IsLinux = {Config["IsLinux"]}
-    Debug = {Debugger.IsAttached}
-    Configuração = {Config["Configuration"]}
-    Ambiente = {Config["Environment"]}
-    AppName = {Config["AppName"]}
-    Executable = {Config["ExecutableFullName"]}
-    Service name = {service_name}
-    Display name = {display_name}
-    Service description = {descripton}
-    Arquivo do serviço = {filename}
-    Config search path = {HotConfiguration.configSearchPath}
-";
-            Log.LogInformation(infos);
+            Log.LogInformation(()=>Log.Msg(Config.Infos()));
 
             bool daemon = false;
 
             if (Environment.UserInteractive) {
                 if (new[] { "/?", "-h", "-H", "-?", "--help", "/help" }.Any(args.Contains)) {
                     execute = false;
-                    var help_stream = Config.GetAsmRessource.GetManifestResourceStream(asm_name + ".Help_Parameters.txt");
-                    help_stream ??= Assembly.GetAssembly(typeof(SelfHostedService))?.GetManifestResourceStream("Hot.Help_Parameters.txt");
-                    if (help_stream != null) Console.WriteLine(filename + " " + new StreamReader(help_stream).ReadToEnd());
+                    // caso não encontre, pesquisa como recurso incorporado na LIB
+                    var help_stream = Config.GetAsmStream("Help_Parameters.txt") ?? Config.GetLibStream("Help_Parameters.txt");
+                    if (help_stream != null) {
+                        Console.WriteLine(
+                            Path.GetFileNameWithoutExtension(Config[ConfigConstants.ExecutableFullName]) + " " + 
+                            new StreamReader(help_stream).ReadToEnd());
+                    }
                 }
                 else if (new[] { "/helpconfig", "--helpconfig" }.Any(args.Contains)) {
                     execute = false;
                     Console.WriteLine("Config search path:");
                     Console.WriteLine(HotConfiguration.configSearchPath);
                 }
+                else if (new[] { "/infos", "--infos" }.Any(args.Contains)) {
+                    execute = false;
+                    Console.WriteLine(Config.Infos()); ;
+                }
                 else if (new[] { "/install", "--install" }.Any(args.Contains)) {
                     #region Install // Faz a instalação do serviço
                     // faz a instalação como serviço
                     execute = false;
 
+                    string service_name = Config[ConfigConstants.ServiceName];
+                    string display_name = Config[ConfigConstants.ServiceDisplayName];
+                    string descripton = Config[ConfigConstants.ServiceDescription];
+                    string executable = Config[ConfigConstants.ExecutableFullName];
+
                     Console.WriteLine($"Install service_name: {service_name}");
 
-                    Log.LogInformation($"Install\r\n service_name: {service_name}\r\n display_name: {display_name}\r\n descripton: {descripton}\r\n file: \"{Config["ExecutableFullName"]}\"");
+                    Log.LogInformation($"Install\r\n service_name: {service_name}\r\n display_name: {display_name}\r\n descripton: {descripton}\r\n file: \"{executable}\"");
 
                     if (OperatingSystem.IsWindows()) {
-                        //                    Exec(System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory() + "installutil.exe", strPathLong);
-                        RunProcess_SUDO("sc.exe", $"create {service_name} displayname=\"{display_name}\" start=auto binpath=\"{Config["ExecutableFullName"]}\"");
+                        // Instala o serviço através do comando sc.exe
+                        RunProcess_SUDO("sc.exe", $"create {service_name} displayname=\"{display_name}\" start=auto binpath=\"{executable}\"");
                         if (descripton.Length > 0) {
                             RunProcess_SUDO("sc.exe", $"description {service_name} \"{descripton.Replace("\"", "^\"")}\"");
                         }
                     }
                     else if (OperatingSystem.IsLinux()) {
+                        // checa se o sistema usa systemd verificando existência do diretório
+                        if (Directory.Exists("/etc/systemd/system")) {
+                            var servicefilestream = Config.GetLibStream("template.service");
+                            if (servicefilestream!=null) {
+                                string servicefile = new StreamReader(servicefilestream).ReadToEnd();
+                                
+                                // preenche template com configurações
+                                servicefile = servicefile.ExpandConfig();
 
+                                File.WriteAllText($"/etc/systemd/system/{service_name}.service", servicefile);
+
+                                Console.WriteLine($"Serviço instalado. Use 'systemctl enable {service_name}' para ativar o serviço.");
+                            }
+                            else {
+                                Console.Error.WriteLine("Template de serviço não encontrado em HotLib.");
+                            }
+                        } else {
+                            Console.Error.WriteLine("/etc/systemd/system não encontrado. Suporte a apenas inicialização systemd.");
+                        }
                     }
                     else {
                         Console.Error.WriteLine("unsupported Operating System.");
@@ -99,10 +111,15 @@ namespace Hot {
                     #region Uninstall // faz a desinstalação como serviço
                     execute = false;
 
+                    string service_name = Config[ConfigConstants.ServiceName];
+                    string display_name = Config[ConfigConstants.ServiceDisplayName];
+                    string descripton = Config[ConfigConstants.ServiceDescription];
+                    string executable = Config[ConfigConstants.ExecutableFullName];
+
                     Console.WriteLine($"Uninstall service_name: {service_name}");
 
                     if (OperatingSystem.IsWindows()) {
-                        //                    Exec(System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory() + "installutil.exe", "/u " + strPathLong);
+                        // Desinstala o servico através do comando sc.exe
                         RunProcess_SUDO("sc.exe", $"stop {service_name}");
                         RunProcess_SUDO("sc.exe", $"delete {service_name}");
                     }
@@ -120,6 +137,7 @@ namespace Hot {
                     AutoUpdate();
                 }
                 else if (new[] { "-v", "--version", "/v", "/version" }.Any(args.Contains)) {
+                    execute = false;
                     Console.WriteLine(Config["AppName"] + '\t' + Config["Version"]);
                 }
             }
@@ -134,9 +152,14 @@ namespace Hot {
             if (execute) {
                 if (!daemon && Environment.UserInteractive) {
                     host.RunAsync();
-                    Console.WriteLine("De [Enter] para encerrar.");
-                    Console.ReadLine();
-                    host.StopAsync();
+                    try {
+                        Console.WriteLine("De [Enter] para encerrar.");
+                        Console.ReadLine();
+                        host.StopAsync();
+                    }
+                    catch (Exception e) {
+                        Log.LogError(e, "Erro ao pedir enter.");
+                    }
                 }
                 else {
                     host.Run();
@@ -173,7 +196,7 @@ namespace Hot {
         public static void AutoUpdate() {
             //Thread.Sleep(1000);
             try {
-                string url = Config["Update:URL"];
+                string url = Config[ConfigConstants.Update.URL];
                 if (url.IsEmpty()) throw new ConfigurationErrorsException("'Update:URL' deve estar configurado em appsettings.json para autoupdate.");
 
                 string destination = "";
@@ -189,12 +212,12 @@ namespace Hot {
                 string app_destination = destination.Item(1, "\t");
                 string version_destination = destination.Item(2, "\t");
 
-                string app_me = Config["AppName"];
+                string app_me = Config[ConfigConstants.AppName];
                 if (app_me != app_destination) {
                     throw new Exception($"App destino ({app_destination} diferente de app origem {app_me}. Não atualizado.");
                 }
 
-                string version_me = Config["Version"];
+                string version_me = Config[ConfigConstants.Version];
                 var c = Compare_Versions(version_me, version_destination);
                 if (c <= 0) {
                     string msg = c == 0 ? "Versões são iguais." : "Versão instalada é maior.";
@@ -203,13 +226,13 @@ namespace Hot {
 
                 Log.LogInformation($"Iniciando atualização da versão {version_destination} para a {version_me}.");
 
-                var executable = File.OpenRead(Config["ExecutableFullName"]);
+                var executable = File.OpenRead(Config[ConfigConstants.ExecutableFullName]);
                 // if (executable.Length < 4_500_000) throw new Exception("Arquivo não parece ser pacote publicado. Abortando.");
 
                 using var fileStreamContent = new StreamContent(executable);
                 // Considera possível erro de não receber resposta completa devido a shutdown do app server
                 try {
-                    hc.DefaultRequestHeaders.Add("UpdateSecret", Config["Update:Secret"]);
+                    hc.DefaultRequestHeaders.Add("UpdateSecret", Config[ConfigConstants.Update.Secret]);
                     var r = hc.PutAsync(url + "autoupdate", fileStreamContent).Result;
                 }
                 catch (Exception) {

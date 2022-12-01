@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Configuration;
 using Microsoft.Extensions.Options;
 using System.Net;
 using System.Runtime.Versioning;
+using static Hot.HotConfiguration;
 
 namespace Hot.Loggers {
     public class emailLoggerConfiguration {
@@ -59,7 +60,7 @@ namespace Hot.Loggers {
                 //}
 
                 if (!String.IsNullOrEmpty(config.To)) {
-                    string subject = Config["AppName"] + ": " + logLevel.ToString() + " em " + DateTime.Now.ToString();
+                    string subject = Config[ConfigConstants.AppName] + ": " + logLevel.ToString() + " em " + DateTime.Now.ToString();
                     string corpo =
 @$"Message: {formatter(state, exception)}
 Exception: {exception?.ToString()}

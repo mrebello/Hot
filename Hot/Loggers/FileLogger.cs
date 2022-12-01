@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Configuration;
 using Microsoft.Extensions.Options;
 using System.Net;
 using System.Runtime.Versioning;
+using static Hot.HotConfiguration;
 
 namespace Hot.Loggers {
     public class FileLoggerConfiguration {
@@ -18,9 +19,9 @@ namespace Hot.Loggers {
 
                 }
                 else {
-                    _filename = Config["ExecutablePath"] + _filename;
+                    _filename = Path.GetDirectoryName(Config[ConfigConstants.ExecutableFullName]) + Path.DirectorySeparatorChar + _filename;
                 }
-                _filename = _filename.ReplaceConf();   // faz expansões de configuração
+                _filename = _filename.ExpandConfig();   // faz expansões de configuração
             }
         }
         public LogLevel Level { get; set; }

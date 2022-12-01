@@ -4,6 +4,7 @@
 /uninstall  | --uninstall      -> uninstall the service
 
 /helpconfig | --helpconfig     -> list configurations files search paths
+/infos      | --infos          -> show runtime informations and exit
 
 -d | --daemon | /d | /daemon   -> run as service
 

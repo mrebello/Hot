@@ -51,8 +51,6 @@ namespace Hot {
                     // HotConf deve ser inicializado antes do LOG, pois opções de log estão nas configurações
                     HotConfiguration.config.HotConfiguration_Init();
 
-                    bool IsWindows = System.OperatingSystem.IsWindows();
-
                     _loggerFactory = LoggerFactory.Create(logging => {
                         logging.AddConsole();
                         logging.AddFilter<EventLogLoggerProvider>((LogLevel level) => level >= LogLevel.Warning);
@@ -60,7 +58,7 @@ namespace Hot {
                         logging.AddConsole();
                         logging.AddDebug();
                         logging.AddEventSourceLogger();
-                        if (IsWindows) {
+                        if (OperatingSystem.IsWindows()) {
                             logging.AddEventLog(new EventLogSettings() { SourceName = Config["AppName"] }); ;
                         }
                         logging.AddFileLogger();

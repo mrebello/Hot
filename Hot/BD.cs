@@ -1,4 +1,6 @@
-﻿namespace Hot {
+﻿using static Hot.HotConfiguration;
+
+namespace Hot {
     /// <summary>
     /// Implementa controle de conexão ADO.NET sobre uma conexão
     /// </summary>
@@ -21,14 +23,14 @@
                 throw new ConfigurationErrorsException($"ConnectionStrings '{name}' deve estar configurado em appsettings.json.");
             }
 
-            connectionString = connectionString.ReplaceConf();
+            connectionString = connectionString.ExpandConfig();
 
             if (isSqlserver) {
                 if (!connectionString.Contains("MultipleActiveResultSets", StringComparison.OrdinalIgnoreCase)) {
                     connectionString += ";MultipleActiveResultSets=True";
                 }
                 if (!connectionString.Contains("Application Name", StringComparison.OrdinalIgnoreCase)) {
-                    connectionString += ";Application Name=" + Config["AppName"];
+                    connectionString += ";Application Name=" + Config[ConfigConstants.AppName];
                 }
             }
 

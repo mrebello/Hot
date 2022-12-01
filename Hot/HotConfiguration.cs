@@ -1,182 +1,246 @@
-﻿namespace Hot {
+﻿using Microsoft.Extensions.Configuration;
+using System.Runtime.ConstrainedExecution;
+using System.Security.Policy;
+
+namespace Hot;
+
+/// <summary>
+/// Define um IConfiguration global, lendo as seguintes configurações:
+/// - Ambiente de desenvolvimento "Development" definido via variável de ambiente nas propriedades de depuração (DOTNET_ENVIRONMENT=Development)
+///     Se não definido na variável de ambiente, checa nome da máquina (StartsWith("RS-DS") = Development
+///     e checa parâmetros
+/// - Arquivo AppSettings.JSON está incorporado no APP para definir as configurações padrões
+/// - Procura configuração também em {exename}.conf e em /etc/{assemblername}.conf antes da linha de comando
+/// - Linha de comando = appupdate.exe /MySetting:SomeValue=123
+/// - Environment = set Logging__LogLevel__Microsoft=Information      (__ ao invés de : na variável de ambiente)
+/// (no Linux, o provedor de log Debug é distribution-dependent e pode ser: /var/log/message or /var/log/syslog)
+/// </summary>
+public class HotConfiguration : IConfiguration {
     /// <summary>
-    /// Define um IConfiguration global, lendo as seguintes configurações:
-    /// - Ambiente de desenvolvimento "Development" definido via variável de ambiente nas propriedades de depuração (DOTNET_ENVIRONMENT=Development)
-    ///     Se não definido na variável de ambiente, checa nome da máquina (StartsWith("RS-DS") = Development
-    ///     e checa parâmetros
-    /// - Arquivo AppSettings.JSON está incorporado no APP para definir as configurações padrões
-    /// - Procura configuração também em {exename}.conf e em /etc/{assemblername}.conf antes da linha de comando
-    /// - Linha de comando = appupdate.exe /MySetting:SomeValue=123
-    /// - Environment = set Logging__LogLevel__Microsoft=Information      (__ ao invés de : na variável de ambiente)
-    /// (no Linux, o provedor de log Debug é distribution-dependent e pode ser: /var/log/message or /var/log/syslog)
+    /// Classe pública para acesso às configurações diretamente com
+    /// <code>using static HotConiguration.conf.Config</code>
     /// </summary>
-    public class HotConfiguration : IConfiguration {
-        /// <summary>
-        /// Classe pública para acesso às configurações diretamente com
-        /// <code>using static HotConiguration.conf.Config</code>
-        /// </summary>
-        public class config {
-            public readonly static HotConfiguration Config = new HotConfiguration();
-            public static void HotConfiguration_Init() { }  // Provoca chamada do construtor
-        }
+    public class config {
+        public readonly static HotConfiguration Config = new HotConfiguration();
+        public static void HotConfiguration_Init() { }  // Provoca chamada do construtor
+    }
 
 #pragma warning disable CS8618 // Tratado. O campo não anulável precisa conter um valor não nulo ao sair do construtor.
-        // Implementação com variável local static para 'singletron'
-        private static IConfiguration _configuration;
+    // Implementação com variável local static para 'singletron'
+    private static IConfiguration _configuration;
 
-        /// <summary>
-        /// Variável com o assembly que contém os recursos embutidos da aplicação
-        /// </summary>
-        private static Assembly asm_resource;
+    /// <summary>
+    /// Variável com o assembly que contém os recursos embutidos da aplicação
+    /// </summary>
+    private static Assembly asm_resource;
 #pragma warning restore CS8618
 
-        /// <summary>
-        /// Devolve o Assembly da aplicação (trata publicação em arquivo único)
-        /// </summary>
-        public Assembly GetAsmRessource { get => asm_resource; }
+    /// <summary>
+    /// Devolve o Assembly da aplicação (trata publicação em arquivo único)
+    /// </summary>
+    public Assembly GetAsmResource { get => asm_resource; }
 
-        /// <summary>
-        /// Retorna com stream incorporado dentro do assembler, adicionando o pré-nome do assembler.
-        /// </summary>
-        /// <param name="sub_name"></param>
-        /// Nome do do stream a pegar (assemblyname + "." + sub_name)
-        /// <returns></returns>
-        public Stream? GetAsmStream(string sub_name) => asm_resource.GetManifestResourceStream(asm_resource.GetName().Name + "." + sub_name);
+    /// <summary>
+    /// Retorna com stream incorporado dentro do assembler, adicionando o pré-nome do assembler.
+    /// </summary>
+    /// <param name="sub_name"></param>
+    /// Nome do do stream a pegar (sem o assemblyname)
+    /// <returns></returns>
+    public Stream? GetAsmStream(string sub_name) => asm_resource.GetManifestResourceStream(asm_resource.GetName().Name + "." + sub_name);
 
-        /// <summary>
-        /// Faz com que _configuration seja inicializado ao ler configuration 
-        /// </summary>
-        public static IConfiguration configuration { get => config.Config; }
-        static object InicializaLock = new object();
+    /// <summary>
+    /// Retorna com stream incorporado dentro da lib Hot, adicionando o pré-nome do assembler.
+    /// </summary>
+    /// <param name="sub_name"></param>
+    /// Nome do do stream a pegar (sem o assemblyname)
+    /// <returns></returns>
+    public Stream? GetLibStream(string sub_name) => Assembly.GetAssembly(typeof(SelfHostedService))?.GetManifestResourceStream("Hot." + sub_name);
 
-        public static string configSearchPath = "";
-        public string this[string key] { get => _configuration[key]; set => _configuration[key] = value; }
-        IEnumerable<IConfigurationSection> IConfiguration.GetChildren() => _configuration.GetChildren();
-        IChangeToken IConfiguration.GetReloadToken() => _configuration.GetReloadToken();
-        IConfigurationSection IConfiguration.GetSection(string key) => _configuration.GetSection(key);
+    /// <summary>
+    /// Retorna com informações sobre a aplicação e o ambiente de execução atual
+    /// </summary>
+    /// <returns></returns>
+    public string Infos() => $@"Infos:
+        Plataform = {Environment.OSVersion.Platform}
+        IsWindows = {OperatingSystem.IsWindows()}
+        IsLinux = {OperatingSystem.IsLinux()}
+        Debug = {Debugger.IsAttached}
+        Configuração = {Config[ConfigConstants.Configuration]}
+        Ambiente = {Config[ConfigConstants.Environment]}
+        AppName = {Config[ConfigConstants.AppName]}
+        Executable = {Config[ConfigConstants.ExecutableFullName]}
+        Service name = {Config[ConfigConstants.ServiceName]}
+        Service Display name = {Config[ConfigConstants.ServiceDisplayName]}
+        Service description = {Config[ConfigConstants.ServiceDescription]}
+        Config search path = {HotConfiguration.configSearchPath}";
+
+
+    /// <summary>
+    /// Faz com que _configuration seja inicializado ao ler configuration 
+    /// </summary>
+    public static IConfiguration configuration { get => config.Config; }
+    static object InicializaLock = new object();
+
+    public static string configSearchPath = "";
+    public string this[string key] { get => _configuration[key]; set => _configuration[key] = value; }
+    IEnumerable<IConfigurationSection> IConfiguration.GetChildren() => _configuration.GetChildren();
+    IChangeToken IConfiguration.GetReloadToken() => _configuration.GetReloadToken();
+    IConfigurationSection IConfiguration.GetSection(string key) => _configuration.GetSection(key);
 
 #pragma warning disable CS8618 // O campo não anulável precisa conter um valor não nulo ao sair do construtor. Considere declará-lo como anulável.
-        public HotConfiguration() {
-            lock (InicializaLock) {
-                if (_configuration == null) {
-                    //var executable_fullname = System.Environment.GetCommandLineArgs()[0];  // devolve o nome da DLL para aplicativos empacotados em arquivo único
-                    var executable_fullname = System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName;
-                    var executable_name = Path.GetFileNameWithoutExtension(executable_fullname);
-                    var executable_path = Path.GetDirectoryName(System.Environment.GetCommandLineArgs()[0]) + Path.DirectorySeparatorChar;
-                    //Assembly asm_executing = System.Reflection.Assembly.GetExecutingAssembly();
-                    // Ao invés do acima, pega o frame mais alto do stackFrame atual
-                    var stackFrame = new System.Diagnostics.StackTrace(1);
-                    asm_resource = stackFrame.GetFrame(stackFrame.FrameCount - 1)?.GetMethod()?.ReflectedType?.Assembly ??
-                        System.Reflection.Assembly.GetExecutingAssembly();
+    public HotConfiguration() {
+        lock (InicializaLock) {
+            if (_configuration == null) {
+                //var executable_fullname = System.Environment.GetCommandLineArgs()[0];  // devolve o nome da DLL para aplicativos empacotados em arquivo único
+                var executable_fullname = System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName;
+                var executable_name = Path.GetFileNameWithoutExtension(executable_fullname);
+                var executable_path = Path.GetDirectoryName(System.Environment.GetCommandLineArgs()[0]) + Path.DirectorySeparatorChar;
+                //Assembly asm_executing = System.Reflection.Assembly.GetExecutingAssembly();
+                // Ao invés do acima, pega o frame mais alto do stackFrame atual
+                var stackFrame = new System.Diagnostics.StackTrace(1);
+                asm_resource = stackFrame.GetFrame(stackFrame.FrameCount - 1)?.GetMethod()?.ReflectedType?.Assembly ??
+                    System.Reflection.Assembly.GetExecutingAssembly();
 
-                    var asm_name = asm_resource.GetName().Name;
-                    // pega environment sem usar 'host'. Prioridades:
-                    // 1 - nome da máquina (se inicia com RS-DS é Development)
-                    // 2 - variável de ambiente
-                    // 3 - linha de comando
-                    string env = Environments.Production;
+                var asm_name = asm_resource.GetName().Name;
+                // pega environment sem usar 'host'. Prioridades:
+                // 1 - nome da máquina (se inicia com RS-DS é Development)
+                // 2 - variável de ambiente
+                // 3 - linha de comando
+                string env = Environments.Production;
 
-                    // **** Linha abaixo criada com configuração 'HARDCODDED'. Deve ser excluída.
-                    env = Environment.MachineName.StartsWith("RS-DS") ? Environments.Development : env;
-                    // ****
+                // **** Linha abaixo criada com configuração 'HARDCODDED'. Deve ser excluída.
+                env = Environment.MachineName.StartsWith("RS-DS") ? Environments.Development : env;
+                // ****
 
-                    env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? env;
-                    var ee = Environment.GetCommandLineArgs().Where((s) => s.ToUpper().StartsWith("ENVIRONMENT"));
-                    if (ee.Count() > 0) {
-                        env = ee.Last().After("=");
-                    }
-
-                    var confBuilder = new ConfigurationBuilder();
-                    confBuilder.SetBasePath(Directory.GetCurrentDirectory());
-
-                    configSearchPath += "- default values embedded in executable" + Environment.NewLine;
-                    var appsttings_embedded = asm_resource.GetManifestResourceStream(asm_name + ".appsettings.json");
-                    if (appsttings_embedded == null) throw new ConfigurationErrorsException("appsettings.json deve ser recurso inserido.");
-                    confBuilder.AddJsonStream(appsttings_embedded);
-
-                    configSearchPath += "- environment variables started with DOTNET_" + Environment.NewLine;
-                    confBuilder.AddEnvironmentVariables(prefix: "DOTNET_");
-
-                    configSearchPath += "- " + executable_path + "appsettings.json" + Environment.NewLine;
-                    confBuilder.AddJsonFile(executable_path + "appsettings.json", true, true);
-
-                    configSearchPath += "- /etc/" + asm_name + ".conf" + Environment.NewLine;
-                    confBuilder.AddJsonFile("/etc/" + asm_name + ".conf", true, true);  // em /etc pega pelo nome 'formal' do assembler
-
-                    configSearchPath += "- " + executable_path + executable_name + ".conf" + Environment.NewLine;
-                    confBuilder.AddJsonFile(executable_path + executable_name + ".conf", true, true);
-
-                    configSearchPath += "- " + $"{executable_path}appsettings.{env}.json" + Environment.NewLine;
-                    confBuilder.AddJsonFile($"{executable_path}appsettings.{env}.json", true, true);
-
-                    configSearchPath += "- command line parameters" + Environment.NewLine;
-                    confBuilder.AddCommandLine(Environment.GetCommandLineArgs());
-
-                    if (env == Environments.Development) {
-                        configSearchPath += "AddSecrets adicionado.";
-                        confBuilder.AddUserSecrets(asm_resource, true);
-                    }
-                    _configuration = confBuilder.Build();
-
-                    // Após ler configurações, analisa ambiente onde está
-#if (DEBUG)
-                    _configuration["Configuration"] = "Debug";
-#elif (RELEASE)
-                    _configuration["Configuration"] = "Release";
-#endif
-                    _configuration["Environment"] = env;
-
-                    if (_configuration["AppName"] == null) {
-                        _configuration["AppName"] = (executable_name ?? asm_name ?? "").TrimEnd(".exe");
-                    }
-                    _configuration["Version"] = asm_resource.GetName().Version?.ToString();
-                    _configuration["ExecutableFullName"] = executable_fullname;
-                    _configuration["ExecutablePath"] = executable_path;
-
-#if NETCOREAPP1_0_OR_GREATER
-                    _configuration["IsWindows"] = System.OperatingSystem.IsWindows().ToString();
-                    _configuration["IsLinux"] = System.OperatingSystem.IsLinux().ToString();
-#else
-                    _configuration["IsWindows"] = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows).ToString();
-                    _configuration["IsLinux"] = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux).ToString();
-#endif
+                // Ambiente definido ou em variáveis de ambiente ou na linha de comando
+                env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? env;
+                var ee = Environment.GetCommandLineArgs().Where((s) => s.ToUpper().StartsWith("ENVIRONMENT"));
+                if (ee.Count() > 0) {
+                    env = ee.Last().After("=");
                 }
+
+                var confBuilder = new ConfigurationBuilder();
+                confBuilder.SetBasePath(Directory.GetCurrentDirectory());
+
+                configSearchPath += "- default values embedded in executable" + Environment.NewLine;
+                var appsttings_embedded = asm_resource.GetManifestResourceStream(asm_name + ".appsettings.json");
+                if (appsttings_embedded == null) throw new ConfigurationErrorsException("appsettings.json deve ser recurso inserido.");
+                confBuilder.AddJsonStream(appsttings_embedded);
+
+                configSearchPath += "- environment variables started with DOTNET_" + Environment.NewLine;
+                confBuilder.AddEnvironmentVariables(prefix: "DOTNET_");
+
+                void add_file(string f) {
+                    configSearchPath += "- " + f + Environment.NewLine;
+                    confBuilder.AddJsonFile(f, true, true);
+                }
+
+                add_file($"{executable_path}appsettings.json");
+                add_file($"/etc/{asm_name}.conf");
+                add_file($"{executable_path}{executable_name}.conf");
+                add_file($"{executable_path}appsettings.{env}.json");
+
+                configSearchPath += "- command line parameters" + Environment.NewLine;
+                confBuilder.AddCommandLine(Environment.GetCommandLineArgs());
+
+                if (env == Environments.Development) {
+                    configSearchPath += "AddSecrets adicionado.";
+                    confBuilder.AddUserSecrets(asm_resource, true);
+                }
+                _configuration = confBuilder.Build();
+
+                // Após ler configurações, analisa ambiente onde está
+#if (DEBUG)
+                _configuration[ConfigConstants.Configuration] = "Debug";
+#elif (RELEASE)
+                _configuration[ConfigConstants.Configuration] = "Release";
+#endif
+                _configuration[ConfigConstants.Environment] = env;
+
+                if (_configuration[ConfigConstants.AppName] == null) {
+                    _configuration[ConfigConstants.AppName] = (executable_name ?? asm_name ?? "").TrimEnd(".exe");
+                }
+                _configuration[ConfigConstants.Version] = asm_resource.GetName().Version?.ToString();
+                _configuration[ConfigConstants.ExecutableFullName] = executable_fullname;
+
+                _configuration[ConfigConstants.ServiceName] = asm_resource.GetCustomAttribute<AssemblyTitleAttribute>()?.Title ?? "";
+                _configuration[ConfigConstants.ServiceDisplayName] = asm_resource.GetCustomAttribute<AssemblyProductAttribute>()?.Product ?? "";
+                _configuration[ConfigConstants.ServiceDescription] = asm_resource.GetCustomAttribute<AssemblyDescriptionAttribute>()?.Description ?? "";
             }
         }
     }
 
 
+    public static partial class ConfigConstants {
+        /// <summary>
+        /// Devolve a configuração do sistema (Debug ou Release), definida em tempo de compilação
+        /// </summary>
+        public const string Configuration = "Configuration";
 
+        /// <summary>
+        /// Devolve o ambiente do sistema (Development ou Production)
+        /// </summary>
+        public const string Environment = "Environment";
 
-    // Constantes de parâmetros:
-    //public partial class Parametros {
-    //    public static readonly string ERP_ConnectionString = "ConnectionString:ERP";
-    //}
+        /// <summary>
+        /// Devolve o nome da aplicação (nome do executável, nome do assembler ou definido nas configurações)
+        /// </summary>
+        public const string AppName = "AppName";
 
-    //    #region Parametro
+        /// <summary>
+        /// Devolve a versão da aplicação (vem do assembler)
+        /// </summary>
+        public const string Version = "Version";
 
-    //    static Dictionary<string, string> _Parametros = new Dictionary<string, string>();
+        /// <summary>
+        /// Devolve o nome completo do executável (do assembler) da aplicação
+        /// </summary>
+        public const string ExecutableFullName = "ExecutableFullName";
 
-    //    /// <summary>
-    //    /// Devolve o parâmetro de configuração para a aplicação dentro do sistema.
-    //    /// 
-    //    /// </summary>
-    //    /// <param name="Nome_Parametro"></param>
-    //    /// <returns></returns>
-    //    public static string Parametro(string Nome_Parametro) {
-    //        string r;
-    //        if (!_Parametros.TryGetValue(Nome_Parametro, out r)) {
-    //            var o = BD.SQLScalar(BD.TBFG_connection(),
-    //                        "exec Le_Parametro @1, @2",
-    //                        Nome_Parametro,
-    //                        (int)Get_Tipo_Ambiente());
-    //            r = (string)o;
-    //            _Parametros.Add(Nome_Parametro, r);
+        /// <summary>
+        /// Configurações relacionadas ao autoupdate
+        /// </summary>
+        public static class Update {
+            /// <summary>
+            /// URL para onde será feita a conexão para o autoupdate.
+            /// </summary>
+            public const string URL = "Update:URL";
 
-    //            Log.Warn("Parâmetro lido \"{0}\" = {1}", Nome_Parametro, r);
-    //        }
-    //        return r;
-    //    }
+            /// <summary>
+            /// Senha a ser verificada no autoupdate
+            /// </summary>
+            public const string Secret = "Update:Secret";
 
-    //    #endregion Parametro
+            /// <summary>
+            /// Lista de IPs/Máscara de onde aceita autoupdate e infos
+            /// </summary>
+            public const string AcceptFrom = "Update:AcceptFrom";
+        }
+
+        /// <summary>
+        /// Nome do serviço (vem do título no assembler da aplicação)
+        /// </summary>
+        public const string ServiceName = "ServiceName";
+
+        /// <summary>
+        /// Nome do serviço a ser mostrado para o usuário (vem do nome do produto no assembler da aplicação)
+        /// </summary>
+        public const string ServiceDisplayName = "ServiceDisplayName";
+
+        /// <summary>
+        /// Descrição do serviço (vem da descrição no assembler da aplicação)
+        /// </summary>
+        public const string ServiceDescription = "ServiceDescription";
+
+        /// <summary>
+        /// Lista de prefixos a serem ouvidos
+        /// </summary>
+        public const string Prefixes = "Prefixes";
+
+        /// <summary>
+        /// Prefixo a ser ignorado no início da url. (proxypass, fastcgi, etc..) usado para ignorar início do path na url no pré-processamento de /version e /update
+        /// </summary>
+        public const string IgnorePrefix = "IgnorePrefix";
+
+    }
 }

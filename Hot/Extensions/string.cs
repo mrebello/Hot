@@ -283,7 +283,7 @@ namespace Hot.Extensions {
         /// </summary>
         /// <param name="s"></param>
         /// <returns></returns>
-        public static string ReplaceConf(this string s) {
+        public static string ExpandConfig(this string s) {
             while (s.Contains("%("))   {    // se contém campo de configuração, faz a troca
                 (string antes, string depois) = s.SplitIn2("%(");
                 (string nome, depois) = depois.SplitIn2(")%");
