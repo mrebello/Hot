@@ -61,6 +61,23 @@ _HOT_globals.cs:
 ----------------
 adicionar o arquivo "vinculado" ao projeto da aplicação, para incluir todos os "using" para uso da biblioteca
 
+BDs para várias bases:
+----------------------
+global using static xxx.BD.SQL;
+
+namespace xxx.BD {
+    public class BDs : BD_simples {
+        public BDs() : base(null) {
+        }
+        public BD_simples WEB = new BD_simples("WEB");
+        public BD_simples ASPPREV = new BD_simples("ASPPREV");
+    }
+
+    public static class SQL {
+        public static BDs BD = new BDs();
+    }
+}
+
 
 appsettings.Development.json:
 -----------------------------
