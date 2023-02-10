@@ -83,6 +83,8 @@ appsettings.Development.json:
 -----------------------------
 Definir a variável de ambiente nas propriedades de depuração da aplicação:
 DOTNET_ENVIRONMENT = Development
+ou
+ASPNETCORE_ENVIRONMENT = Development
 
 (exemplo de appsettings.Development.json)
 {

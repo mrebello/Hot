@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging.Configuration;
 using Microsoft.Extensions.Options;
-using System.Net;
 using System.Runtime.Versioning;
 using static Hot.HotConfiguration;
 

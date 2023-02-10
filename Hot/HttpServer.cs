@@ -140,10 +140,10 @@ namespace Hot {
             ((IConfiguration)Config).GetReloadToken().RegisterChangeCallback(Config_Changed, default);
         }
 
-        static string[] Prefixes_from_config() => HotConfiguration.configuration.GetSection(ConfigConstants.Prefixes).Get<string[]>();
+        static string[] Prefixes_from_config() => Config[ConfigConstants.URLs].Split(';',StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         static string IgnorePrefix_from_config() => Config[ConfigConstants.IgnorePrefix] ?? "";
         async void Config_Changed(object state) {
-            var new_Prefixes = HotConfiguration.configuration.GetSection(ConfigConstants.Prefixes).Get<string[]>();
+            var new_Prefixes = Prefixes_from_config();
             if (!prefixes.SequenceEqual(new_Prefixes)) {
                 Log.LogWarning("Configuração de Prefixes foi alterada. Reiniciando Listener.");
                 prefixes = new_Prefixes;

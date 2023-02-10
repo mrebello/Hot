@@ -113,7 +113,7 @@ public class HotConfiguration : IConfiguration {
                 // ****
 
                 // Ambiente definido ou em variáveis de ambiente ou na linha de comando
-                env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? env;
+                env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? env;
                 var ee = Environment.GetCommandLineArgs().Where((s) => s.ToUpper().StartsWith("ENVIRONMENT"));
                 if (ee.Count() > 0) {
                     env = ee.Last().After("=");
@@ -130,6 +130,9 @@ public class HotConfiguration : IConfiguration {
                 configSearchPath += "- environment variables started with DOTNET_" + Environment.NewLine;
                 confBuilder.AddEnvironmentVariables(prefix: "DOTNET_");
 
+                configSearchPath += "- environment variables started with ASPNETCORE_" + Environment.NewLine;
+                confBuilder.AddEnvironmentVariables(prefix: "ASPNETCORE_");
+                
                 void add_file(string f) {
                     configSearchPath += "- " + f + Environment.NewLine;
                     confBuilder.AddJsonFile(f, true, true);
@@ -233,9 +236,9 @@ public class HotConfiguration : IConfiguration {
         public const string ServiceDescription = "ServiceDescription";
 
         /// <summary>
-        /// Lista de prefixos a serem ouvidos
+        /// Lista de prefixos a serem ouvidos, separada por ';'
         /// </summary>
-        public const string Prefixes = "Prefixes";
+        public const string URLs = "urls";
 
         /// <summary>
         /// Prefixo a ser ignorado no início da url. (proxypass, fastcgi, etc..) usado para ignorar início do path na url no pré-processamento de /version e /update
