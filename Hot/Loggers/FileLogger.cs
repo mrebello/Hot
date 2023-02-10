@@ -47,6 +47,8 @@ namespace Hot.Loggers {
             if (eventId == EventIdErro_ao_gravar_arquivo) return;   // Evita recursividade na chamada.
 
             var config = _getCurrentConfig();
+            if (String.IsNullOrEmpty(config.filename)) return;
+
             try {
                 string corpo =
 @$"Message: {formatter(state, exception)}

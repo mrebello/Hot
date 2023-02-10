@@ -11,6 +11,7 @@
 		<Deterministic>false</Deterministic>
 		<Platforms>AnyCPU;x64</Platforms>
 		<PlatformTarget>AnyCPU</PlatformTarget>
+		<UserSecretsId>Senhas</UserSecretsId>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
