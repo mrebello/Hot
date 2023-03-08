@@ -108,9 +108,9 @@ public class HotConfiguration : IConfiguration {
                 // 3 - linha de comando
                 string env = Environments.Production;
 
-                // **** Linha abaixo criada com configuração 'HARDCODDED'. Deve ser excluída.
-                env = Environment.MachineName.StartsWith("RS-DS") ? Environments.Development : env;
-                // ****
+                //// **** Linha abaixo criada com configuração 'HARDCODDED'. Deve ser excluída.
+                //env = Environment.MachineName.StartsWith("RS-DS") ? Environments.Development : env;
+                //// ****
 
                 // Ambiente definido ou em variáveis de ambiente ou na linha de comando
                 env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? env;
