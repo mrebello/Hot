@@ -134,7 +134,7 @@ namespace Hot {
                 else if (new[] { "/autoupdate", "--autoupdate" }.Any(args.Contains)) {
                     execute = false;
                     //new Thread(() => AutoUpdate()).Start();
-                    AutoUpdate();
+                    StartAutoUpdate();
                 }
                 else if (new[] { "-v", "--version", "/v", "/version" }.Any(args.Contains)) {
                     execute = false;
@@ -193,7 +193,7 @@ namespace Hot {
             }
         }
 
-        public static void AutoUpdate() {
+        public static void StartAutoUpdate() {
             //Thread.Sleep(1000);
             try {
                 string url = Config[ConfigConstants.Update.URL];

@@ -1,8 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using System.Runtime.ConstrainedExecution;
-using System.Security.Policy;
-
-namespace Hot;
+﻿namespace Hot;
 
 /// <summary>
 /// Define um IConfiguration global, lendo as seguintes configurações:
@@ -24,6 +20,8 @@ public class HotConfiguration : IConfiguration {
         public readonly static HotConfiguration Config = new HotConfiguration();
         public static void HotConfiguration_Init() { }  // Provoca chamada do construtor
     }
+
+    private static OnlineProvider onlineProvider = new OnlineProvider();
 
 #pragma warning disable CS8618 // Tratado. O campo não anulável precisa conter um valor não nulo ao sair do construtor.
     // Implementação com variável local static para 'singletron'
@@ -82,7 +80,12 @@ public class HotConfiguration : IConfiguration {
     static object InicializaLock = new object();
 
     public static string configSearchPath = "";
-    public string this[string key] { get => _configuration[key]; set => _configuration[key] = value; }
+    public string this[string key] { 
+        get => _configuration[key];
+        set => onlineProvider.Set(key, value); // _configuration[key] = value;
+    }
+
+    public void OnReload() => onlineProvider.OnReload();
     IEnumerable<IConfigurationSection> IConfiguration.GetChildren() => _configuration.GetChildren();
     IChangeToken IConfiguration.GetReloadToken() => _configuration.GetReloadToken();
     IConfigurationSection IConfiguration.GetSection(string key) => _configuration.GetSection(key);
@@ -150,9 +153,15 @@ public class HotConfiguration : IConfiguration {
                     configSearchPath += "AddSecrets adicionado.";
                     confBuilder.AddUserSecrets(asm_resource, true);
                 }
+
+                configSearchPath += "- runtime defined values" + Environment.NewLine;
+                confBuilder.Add(onlineProvider);
+
+                // -- Build configuration --
+
                 _configuration = confBuilder.Build();
 
-                // Após ler configurações, analisa ambiente onde está
+                // Após ler configurações, analisa ambiente onde está e coloca valores em configurações 
 #if (DEBUG)
                 _configuration[ConfigConstants.Configuration] = "Debug";
 #elif (RELEASE)
@@ -173,6 +182,23 @@ public class HotConfiguration : IConfiguration {
         }
     }
 
+    public class OnlineProvider : ConfigurationProvider, IConfigurationSource {
+        IConfigurationProvider IConfigurationSource.Build(IConfigurationBuilder builder) => this;
+        /// <summary>
+        /// Set a configuration key, with flag for reload configurations
+        /// </summary>
+        /// <param name="key">Name of key.</param>
+        /// <example>Logging:Console:LogLevel:Default</example>
+        /// <param name="value">Value</param>
+        /// <example>Information</example>
+        /// <param name="reload">True if is to reload configurations</param>
+        public void Set(string key, string value, bool reload = false) {
+            if (!String.IsNullOrEmpty(key)) Data[key] = value;
+            if (reload) base.OnReload();
+        }
+
+        public new void OnReload() => OnReload();
+    }
 
     public static partial class ConfigConstants {
         /// <summary>

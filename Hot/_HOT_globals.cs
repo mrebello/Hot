@@ -22,6 +22,7 @@ global using System.Xml;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
+global using Microsoft.Extensions.Hosting.WindowsServices;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Logging.EventLog;
 global using Microsoft.Extensions.Primitives;
@@ -32,5 +33,6 @@ global using Hot.Extensions.HotLogExtensions;
 global using Hot.Loggers;
 
 global using static Hot.Functions;
+global using static Hot.HotConfiguration;
 global using static Hot.HotConfiguration.config;
 global using static Hot.HotLog.log;

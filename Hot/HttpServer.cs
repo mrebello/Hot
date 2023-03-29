@@ -1,12 +1,4 @@
-﻿using Microsoft.Extensions.Hosting.WindowsServices;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.IO.Compression;
-using System.Security.AccessControl;
-using System.Security.Cryptography;
-using static Hot.HotConfiguration;
-
-namespace Hot {
+﻿namespace Hot {
     /// <summary>
     /// Classe para implementação de servidor de http 'simples'.
     /// Na inicialização do sistema, deve ser chamado o MainDefault com a classe especializada.
@@ -42,92 +34,21 @@ namespace Hot {
             try {
                 string url = RemoveIgnorePrefix(context.Request.RawUrl);
                 if (url == "/version") {
-                    Version(context);
-                }
-                else if (url == "/infos") {
-                    string IPOrigem = context.Request.IP_Origem();
-                    string acceptFrom = Config[ConfigConstants.Update.AcceptFrom];
+                    context.Response.Send(Hot.AutoUpdate.Version());
+                } else if (url == "/infos") {
+                    if (AutoUpdate.Authorized(context)) context.Response.Send(AutoUpdate.Infos());
+                } else if (url == "/autoupdate") {
+                    if (AutoUpdate.Authorized(context)) AutoUpdate.ReceiveFile(context);
+                } else {
 
-                    if (acceptFrom.IsEmpty()) {
-                        Log.LogError($"'Update:AcceptFrom' deve estar configurado em appsettings.json para infos. Tentativa do IP: {IPOrigem}");
-                        context.Response.SendError("Falha na configuração.");
-                    }
-                    else {
-                        if (!IP_IsInList(IPOrigem, acceptFrom)) {
-                            Log.LogError($"Tentativa de pegar informações de IP não autorizado. IP: {IPOrigem}");
-                            context.Response.SendError("Não autorizado.", HttpStatusCode.Unauthorized);
-                        }
-                        else {
-                        }
-                        context.Response.Send(Config.Infos().ReplaceLineEndings("<br>"));
-                    }
-                }
-                else if (url == "/autoupdate") {
-                    string IPOrigem = context.Request.IP_Origem();
-                    string acceptFrom = Config[ConfigConstants.Update.AcceptFrom];
-
-                    if (acceptFrom.IsEmpty()) {
-                        Log.LogError($"'Update:AcceptFrom' deve estar configurado em appsettings.json para autoupdate. Tentativa do IP: {IPOrigem}");
-                        context.Response.SendError("Falha na configuração.");
-
-                    }
-                    else {
-                        if (!IP_IsInList(IPOrigem, acceptFrom)) {
-                            Log.LogError($"Tentativa de atualização de IP não autorizado. IP: {IPOrigem}");
-                            context.Response.SendError("Não autorizado.", HttpStatusCode.Unauthorized);
-                        }
-                        else {
-                            string configsecret = Config[ConfigConstants.Update.Secret];
-                            string secret = context.Request.Headers["UpdateSecret"] ?? "";
-                            if (configsecret != secret) {
-                                Log.LogError($"UpdateSecret inválido. IP: {IPOrigem}");
-                                context.Response.SendError("Não autorizado.", HttpStatusCode.Unauthorized);
-
-                            }
-                            else {
-
-                                // Recebe arquivo atualizado e salva na pasta do executável (se não tiver permissão, não pode atualizar)
-                                long size = 0;
-                                string tmpfile = Path.GetDirectoryName(Config[ConfigConstants.ExecutableFullName]) + Path.DirectorySeparatorChar + Path.GetRandomFileName();
-                                try {
-                                    var f = File.Create(tmpfile);
-                                    context.Request.InputStream.CopyTo(f);
-                                    size = f.Length;
-                                    f.Close();
-                                }
-                                catch (Exception e) {
-                                    Log.LogError("Erro ao salvar arquivo da atualização.", e);
-                                }
-
-                                // Se salvou o arquivo corretamente
-                                if (size > 0) {
-                                    context.Response.Send("Atualização recebida.");
-                                    AutoUpdate_Process(tmpfile);
-                                }
-                                else {
-                                    context.Response.SendError("Erro ao processar atualização.");
-                                }
-                            }
-                        }
-                    }
-                    //                    MemoryStream ms = new MemoryStream();
-                    //                    context.Request.InputStream.CopyTo(ms);
-                    //                    byte[] bb = ms.ToArray();
-                }
-                else {
                     Process(context);
                     context?.Response?.Close();
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 string msg = "Erro ao processar o pedido.";
                 Log.LogError(10000, e, msg);
                 context.Response.SendError(msg);
             }
-        }
-
-        public virtual void Version(HttpListenerContext context) {
-            context.Response.Send(Config[ConfigConstants.AppName] + '\t' + Config[ConfigConstants.Version]);
         }
 
         /// <summary>
@@ -140,7 +61,7 @@ namespace Hot {
             ((IConfiguration)Config).GetReloadToken().RegisterChangeCallback(Config_Changed, default);
         }
 
-        static string[] Prefixes_from_config() => Config[ConfigConstants.URLs].Split(';',StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        static string[] Prefixes_from_config() => Config[ConfigConstants.URLs].Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         static string IgnorePrefix_from_config() => Config[ConfigConstants.IgnorePrefix] ?? "";
         async void Config_Changed(object state) {
             var new_Prefixes = Prefixes_from_config();
@@ -174,8 +95,7 @@ namespace Hot {
             L.LogDebug("Iniciando escuta");
             try {
                 listener.Start();
-            }
-            catch (HttpListenerException ex) {
+            } catch (HttpListenerException ex) {
                 if (ex.ErrorCode == 5) {   // Acesso negado
                     if (OperatingSystem.IsWindows()) {
                         string msg = "Erro de acesso negado. Use os comandos abaixo para liberar o acesso no netsh:" + Environment.NewLine;
@@ -202,11 +122,9 @@ namespace Hot {
                 try {
                     HttpListenerContext ct = listener.GetContext();
                     Task t = Task.Run(() => PreProcess(ct));               // usa task ao invés de thread para acelerar o processamento de respostas rápidas
-                }
-                catch (HttpListenerException e) when (e.ErrorCode == 995     // Operação de E/S anulada
-                                                   || e.ErrorCode == 500) {  // Listener closed 
-                }
-                catch (Exception e) {
+                } catch (HttpListenerException e) when (e.ErrorCode == 995     // Operação de E/S anulada
+                                                     || e.ErrorCode == 500) {  // Listener closed 
+                } catch (Exception e) {
                     Log.LogError(e, "Erro ao receber conexão.");
                 }
             }
@@ -233,131 +151,5 @@ namespace Hot {
             return url;
         }
 
-
-        /// <summary>
-        /// Faz a atualização do próprio aplicativo. Recebe o nome do arquivo temporário com o novo executável.
-        /// </summary>
-        /// <param name=""></param>
-        public virtual void AutoUpdate_Process(string tmpfile) {
-            if (OperatingSystem.IsWindows()) {
-                string path = Path.GetDirectoryName(tmpfile) ?? "";
-                string batfile = path + Path.DirectorySeparatorChar + Path.GetRandomFileName() + ".bat";
-                string executablename = Path.GetFileName(Config[ConfigConstants.ExecutableFullName]);
-
-                if (WindowsServiceHelpers.IsWindowsService()) {   // Rodando como serviço do windows
-                    #region Atualiza Windows Service
-                    Log.LogInformation($"Atualizando Windows Service.");
-
-                    string servicename = Config.GetAsmResource.GetCustomAttribute<AssemblyTitleAttribute>()?.Title ?? "";
-
-                    string bat = "";
-                    bat += $"cd {path}\r\n";
-                    bat += $"sc stop {servicename}\r\n";
-//                    bat += $"taskkill /im:\"{executablename}\"\r\n";
-//                    bat += $"taskkill /F /im:\"{executablename}\"\r\n";
-                    bat += $"ren \"{executablename}\" \"{executablename}-{DateTime.Now.ToString("yyyy-MM-dd-HHMMss")}\"\r\n";
-                    bat += $"ren \"{tmpfile}\" \"{executablename}\"\r\n";
-                    bat += $"sc start {servicename}\r\n";
-                    bat += $"del \"{batfile}\"\r\n";
-
-                    L.LogDebug($"Salvando arquivo {batfile} com " + bat);
-                    File.WriteAllText(batfile, bat);
-                    L.LogDebug($"Execuando arquivo {batfile}");
-                    System.Diagnostics.Process.Start(batfile);
-                    System.Environment.Exit(0);
-
-                    #endregion
-                }
-                else {   // Se não é como serviço, assume que foi chamado por linha de comando
-                    #region Atualiza Windows linha de comando
-                    Log.LogInformation($"Atualizando Windows command line.");
-
-                    string bat = "";
-                    bat += $"cd {path}\r\n";
-//                    bat += $"taskkill /im:\"{executablename}\"\r\n";
-//                    bat += $"taskkill /F /im:\"{executablename}\"\r\n";
-                    bat += $"ren \"{executablename}\" \"{executablename}-{DateTime.Now.ToString("yyyy-MM-dd-HHMMss")}\"\r\n";
-                    bat += $"ren \"{tmpfile}\" \"{executablename}\"\r\n";
-                    bat += String.Join(" ", Environment.GetCommandLineArgs()) + "\r\n";
-                    bat += $"del \"{batfile}\"\r\n";
-
-                    L.LogDebug($"Salvando arquivo {batfile} com " + bat);
-                    File.WriteAllText(batfile, bat);
-                    L.LogDebug($"Execuando arquivo {batfile}");
-                    System.Diagnostics.Process.Start(batfile);
-                    L.LogDebug($"Saindo do processo.");
-                    System.Environment.Exit(0);
-
-                    #endregion
-                }
-            }
-            else if (OperatingSystem.IsLinux()) {
-                void chmod(string file, string arguments) {
-                    var p=System.Diagnostics.Process.Start("chmod", $"{arguments} \"{file}\"");
-                    p.WaitForExit();
-                }
-
-                if (Microsoft.Extensions.Hosting.Systemd.SystemdHelpers.IsSystemdService()) {
-                    #region Atualiza Linux Service
-                    Log.LogInformation($"Atualizando serviço linux.");
-
-                    string service_name = Config[ConfigConstants.ServiceName];
-
-                    string path = Path.GetDirectoryName(tmpfile) ?? "";
-                    string bashfile = path + Path.DirectorySeparatorChar + Path.GetRandomFileName();
-                    string bashfile2 = path + Path.DirectorySeparatorChar + Path.GetRandomFileName();
-                    string executablename = Path.GetFileName(Config[ConfigConstants.ExecutableFullName]);
-
-                    string bat = "#!/bin/bash\n";
-                    bat += $"cd \"{path}\"\n";
-                    bat += $"mv \"{executablename}\" \"{executablename}-{DateTime.Now.ToString("yyyy-MM-dd-HHMMss")}\"\n";
-                    bat += $"mv \"{tmpfile}\" \"{executablename}\"\n";
-                    bat += $"chmod u+x \"{executablename}\"\n";
-                    bat += $"( rm \"{bashfile}\"  ; systemctl restart \"{service_name}\" )\n";
-
-                    Log.LogDebug($"Salvando arquivo {bashfile} com " + bat);
-                    File.WriteAllText(bashfile, bat);
-                    chmod(bashfile, "u+x");
-
-                    Log.LogDebug($"Execuando arquivo {bashfile}");
-                    System.Diagnostics.Process.Start(bashfile);
-                    //System.Environment.Exit(0);
-                    
-                    #endregion
-                }
-                else {
-                    #region Atualiza Linux cmd line
-                    Log.LogInformation($"Atualizando linux command line.");
-
-                    string path = Path.GetDirectoryName(tmpfile) ?? "";
-                    string bashfile = path + Path.DirectorySeparatorChar + Path.GetRandomFileName();
-                    string executablename = Path.GetFileName(Config[ConfigConstants.ExecutableFullName]);
-                    string servicename = Config.GetAsmResource.GetCustomAttribute<AssemblyTitleAttribute>()?.Title ?? "";
-
-                    string bat = "#!/bin/sh\n";
-                    bat += $"cd \"{path}\"\n";
-                    bat += $"sleep 0.3\n";
-                    bat += $"mv \"{executablename}\" \"{executablename}-{DateTime.Now.ToString("yyyy-MM-dd-HHMMss")}\"\n";
-                    bat += $"mv \"{tmpfile}\" \"{executablename}\"\n";
-                    bat += $"chmod u+x \"{executablename}\"\n";
-                    bat += $"sleep 0.3\n";
-                    bat += String.Join(" ", Environment.GetCommandLineArgs()) + "\n";
-                    bat += $"rm \"{bashfile}\"\n";
-
-                    Log.LogDebug($"Salvando arquivo {bashfile} com " + bat);
-                    File.WriteAllText(bashfile, bat);
-                    chmod(bashfile, "u+x");
-                    Log.LogDebug($"Execuando arquivo {bashfile}");
-                    System.Diagnostics.Process.Start(bashfile);
-                    Log.LogDebug($"Saindo do processo.");
-                    System.Environment.Exit(0);
-
-                    #endregion
-                }
-            }
-            else {
-                throw new NotImplementedException("AutoUpdate Só implementado para Linux e Windows.");
-            }
-        }
     }
 }

@@ -1,5 +1,7 @@
 ﻿namespace Hot.Extensions {
-    // Extensões para System.Net.HttpListenerRequest
+    /// <summary>
+    /// Extensões para System.Net.HttpListenerRequest
+    /// </summary>
     public static class HttpListenerRequestExtensions {
         /// <summary>
         /// Devolve o IP de origem da requisição, considerendo o X-Forwarded-For quando existir.
