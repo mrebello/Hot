@@ -21,7 +21,47 @@ public class HotConfiguration : IConfiguration {
         public static void HotConfiguration_Init() { }  // Provoca chamada do construtor
     }
 
+    /// <summary>
+    /// Variável com o serviceprovider configurado no HostBuilder/WebApplication.
+    /// </summary>
+    private static IServiceProvider? _serviceprovider;
+
+    /// <summary>
+    /// Seta service provider devolvido pela configuração. A ser usado nos HostBuilder da HotAPI internamente.
+    /// NÃO deve ser chamado pelo usuário da biblioteca. Possui atributo para não aparecer no IntelliSense.
+    /// </summary>
+    /// <param name="serviceProvider">Servico a ser ajustado</param>
+    /// <param name="passwd">Número de senha interno a ser passado - para garantir que não será chamado pelo usuário.</param>
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    public void __Set_ServiceProvider(IServiceProvider serviceProvider, int passwd) {
+        if (passwd != 675272) throw new Exception("ESTE MÉTODO NÃO DEVE SER USADO PELO USUÁRIO DA BIBLIOTECA.");
+        _serviceprovider = serviceProvider;
+    }
+
+    /// <summary>
+    /// Devolve o ServiceProvider da aplicação (definido no AppBuild ou, caso não exista, o genérico do sistema)
+    /// </summary>
+    public IServiceProvider ServiceProvider {
+        get {
+            if (_serviceprovider == null) {
+                HotConfiguration_Init();
+                HotLog_Init();
+                var host = new HostBuilder()
+                    .ConfigureServices(services => services
+                        .AddSingleton<IConfiguration, HotConfiguration>()
+                        .AddSingleton<ILogger, HotLog>()
+                     ).Build();
+                _serviceprovider = host.Services;
+            }
+            return _serviceprovider;
+        }
+    }
+
+    /// <summary>
+    /// Variável com provedor de configurações online para permitir disparar OnReload()
+    /// </summary>
     private static OnlineProvider onlineProvider = new OnlineProvider();
+
 
 #pragma warning disable CS8618 // Tratado. O campo não anulável precisa conter um valor não nulo ao sair do construtor.
     // Implementação com variável local static para 'singletron'
@@ -84,7 +124,6 @@ public class HotConfiguration : IConfiguration {
         get => _configuration[key];
         set => onlineProvider.Set(key, value); // _configuration[key] = value;
     }
-
     public void OnReload() => onlineProvider.OnReload();
     IEnumerable<IConfigurationSection> IConfiguration.GetChildren() => _configuration.GetChildren();
     IChangeToken IConfiguration.GetReloadToken() => _configuration.GetReloadToken();

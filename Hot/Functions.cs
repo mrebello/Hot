@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Drawing;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Unicode;
@@ -286,6 +287,25 @@ namespace Hot {
             return false;
         }
 
+
+        /// <summary>
+        /// Start default browser with url's
+        /// </summary>
+        /// <param name="url">url to open</param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public static Process? StartURL(string url) {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+                url = url.Replace("&", "^&");
+                return Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            } else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+                return Process.Start("xdg-open", url);
+            } else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+                return Process.Start("open", url);
+            } else {
+                throw new NotImplementedException("StartURL não implementada para a plataforma.");
+            }
+        }
 
     }
 }

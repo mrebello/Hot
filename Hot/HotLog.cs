@@ -16,6 +16,7 @@ namespace Hot {
         private static ILogger _logger;
         private static ILoggerFactory _loggerFactory;
 #pragma warning restore CS8618
+        public ILoggerFactory loggerFactory { get => _loggerFactory; }
         public static ILogger logger { get => _logger; }
         static object InicializaLock = new object();
         /// <summary>
@@ -45,27 +46,28 @@ namespace Hot {
         void ILogger.Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
             _logger.Log<TState>(logLevel, eventId, state, exception, formatter);
 
+        static public void LoggingCreate(ILoggingBuilder logging) {
+            logging.AddConsole();
+            logging.AddFilter<EventLogLoggerProvider>((LogLevel level) => level >= LogLevel.Warning);
+            logging.AddConfiguration(HotConfiguration.configuration.GetSection("Logging"));
+            logging.AddConsole();
+            logging.AddDebug();
+            logging.AddEventSourceLogger();
+            if (OperatingSystem.IsWindows()) {
+                logging.AddEventLog(new EventLogSettings() { SourceName = Config["AppName"] });
+            }
+            logging.AddFileLogger();
+            logging.AddemailLogger();
+            logging.Configure((LoggerFactoryOptions options) => options.ActivityTrackingOptions = ActivityTrackingOptions.SpanId | ActivityTrackingOptions.TraceId | ActivityTrackingOptions.ParentId);
+        }
+
         public HotLog() {
             lock (InicializaLock) {
                 if (_logger == null) {
                     // HotConf deve ser inicializado antes do LOG, pois opções de log estão nas configurações
                     HotConfiguration.config.HotConfiguration_Init();
 
-                    _loggerFactory = LoggerFactory.Create(logging => {
-                        logging.AddConsole();
-                        logging.AddFilter<EventLogLoggerProvider>((LogLevel level) => level >= LogLevel.Warning);
-                        logging.AddConfiguration(HotConfiguration.configuration.GetSection("Logging"));
-                        logging.AddConsole();
-                        logging.AddDebug();
-                        logging.AddEventSourceLogger();
-                        if (OperatingSystem.IsWindows()) {
-                            logging.AddEventLog(new EventLogSettings() { SourceName = Config["AppName"] }); ;
-                        }
-                        logging.AddFileLogger();
-                        logging.AddemailLogger();
-                        logging.Configure((LoggerFactoryOptions options) => options.ActivityTrackingOptions = ActivityTrackingOptions.SpanId | ActivityTrackingOptions.TraceId | ActivityTrackingOptions.ParentId);
-                    });
-
+                    _loggerFactory = LoggerFactory.Create(LoggingCreate);
                     _logger = _loggerFactory.CreateLogger(System.Reflection.Assembly.GetExecutingAssembly().GetName().FullName);
                 }
             }

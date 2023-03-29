@@ -238,7 +238,8 @@ namespace Hot.Extensions {
         /// <returns></returns>
         public static bool ToBool(this String s) {
             bool r = false;
-            bool.TryParse(s.Trim(), out r);
+            if (s!=null)
+                bool.TryParse(s.Trim(), out r);
             return r;
         }
 
