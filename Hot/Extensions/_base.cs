@@ -15,8 +15,8 @@ namespace Hot.Extensions {
                 return null;
             if (v is DBNull)
                 return null;
-            if (v is string)
-                return (string)v;
+            if (v is string s)
+                return s;
             return v.ToString();
         }
 
@@ -26,7 +26,7 @@ namespace Hot.Extensions {
         /// <param name="v"></param>
         /// <returns></returns>
         public static int? ToInt(this object v) {
-            if (v == null)
+            if (v is null)
                 return null;
             if (v is DBNull)
                 return null;
@@ -134,7 +134,7 @@ namespace Hot.Extensions {
                         displayValue = String.Format("{0} 0x{1:X}", type.FullName, value);
 
                     } else if (value is Byte[] || value is SByte[]) {
-                        displayValue = String.Format("{0}(#{1}) 0x{2}", type.FullName, (value as Byte[])!.Length, BitConverter.ToString(value as Byte[]));
+                        displayValue = String.Format("{0}(#{1}) 0x{2}", type.FullName, (value as Byte[])!.Length, BitConverter.ToString((value as Byte[])!));
 
                     } else if (value is String[]) {
                         displayValue = String.Empty;
@@ -147,7 +147,7 @@ namespace Hot.Extensions {
                         var i = 0;
                         var displayValues = String.Empty;
                         var collection = value as ICollection;
-                        foreach (object element in collection) {
+                        foreach (object element in collection!) {
                             displayValues = String.Concat(displayValues, Dump(element, i.ToString(), depth + 1));
                             i++;
                         }
@@ -169,7 +169,7 @@ namespace Hot.Extensions {
                         PropertyInfo[] properties = type.GetProperties();
                         foreach (PropertyInfo property in properties) {
                             displayValues = String.Concat(displayValues,
-                                Dump(property.GetValue(value, null), property.Name, depth + 1));
+                                Dump(property.GetValue(value, null)!, property.Name, depth + 1));
                         }
 
                         displayValue = String.Format("{0}(#{1}) {{\n{2}{3}}}\n", type.Name, properties.Length, displayValues, indent);
