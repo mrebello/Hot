@@ -15,5 +15,6 @@ Configuration parameters are accept in many forms. (/helpconfig)
 In command line, use ':':
 
 /Logging:Console:LogLevel:Default=Debug  -> show logs
+/ENVIRONMENT=Development bug             -> Define environment to Development (bug is the second parameter)
 
-On linux, a BUG in .net take only after 2nd parameter. Put any thing on 2nd parameter
+A BUG in .net ignore the last parameter. Put any thing on last parameter to workaround

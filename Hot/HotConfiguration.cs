@@ -156,7 +156,7 @@ public class HotConfiguration : IConfiguration {
 
                 // Ambiente definido ou em variáveis de ambiente ou na linha de comando
                 env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? env;
-                var ee = Environment.GetCommandLineArgs().Where((s) => s.ToUpper().StartsWith("ENVIRONMENT"));
+                var ee = Environment.GetCommandLineArgs().Where((s) => s.ToUpper().TrimStart(new char[] {'-', '/'}).StartsWith("ENVIRONMENT"));
                 if (ee.Count() > 0) {
                     env = ee.Last().After("=");
                 }
