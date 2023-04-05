@@ -152,6 +152,11 @@
         }
 
 
+        /// <summary>
+        /// Pega o arquivo a atualizar do HttpListenerContext
+        /// Para HotAPI, ver HotAPIServer.AutoUpdate_ReceiveFile
+        /// </summary>
+        /// <param name="context"></param>
         public static void ReceiveFile(HttpListenerContext context) {
             string configsecret = Config[ConfigConstants.Update.Secret];
             string secret = context.Request.Headers["UpdateSecret"] ?? "";
@@ -182,5 +187,6 @@
                 }
             }
         }
+
     }
 }

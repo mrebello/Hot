@@ -218,13 +218,13 @@ namespace Hot {
                 }
 
                 string version_me = Config[ConfigConstants.Version];
-                var c = Compare_Versions(version_me, version_destination);
-                if (c <= 0) {
-                    string msg = c == 0 ? "Versões são iguais." : "Versão instalada é maior.";
-                    throw new Exception(msg + " Não atualizado.");
-                }
+                //var c = Compare_Versions(version_me, version_destination);
+                //if (c <= 0) {
+                //    string msg = c == 0 ? "Versões são iguais." : "Versão instalada é maior.";
+                //    throw new Exception(msg + " Não atualizado.");
+                //}
 
-                Log.LogInformation($"Iniciando atualização da versão {version_destination} para a {version_me}.");
+                //Log.LogInformation($"Iniciando atualização da versão {version_destination} para a {version_me}.");
 
                 var executable = File.OpenRead(Config[ConfigConstants.ExecutableFullName]);
                 // if (executable.Length < 4_500_000) throw new Exception("Arquivo não parece ser pacote publicado. Abortando.");
