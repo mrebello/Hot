@@ -11,6 +11,7 @@
 		</Description>
 		<Copyright>Marcos Paulo Ferreira Rebello</Copyright>
 		<AssemblyVersion>1.0.*</AssemblyVersion>
+		<VersionPrefix>1.0.1</VersionPrefix>
 		<VersionSuffix>beta</VersionSuffix>
 		<Deterministic>false</Deterministic>
 		<Platforms>AnyCPU;x64</Platforms>
@@ -26,6 +27,7 @@
 		<IncludeSymbols>True</IncludeSymbols>
 		<PackageId>HotLIB</PackageId>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<Version>$(VersionPrefix)-$(VersionSuffix)</Version>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

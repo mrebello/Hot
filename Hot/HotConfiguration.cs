@@ -1,4 +1,6 @@
-﻿namespace Hot;
+﻿using Microsoft.Extensions.Hosting.Internal;
+
+namespace Hot;
 
 /// <summary>
 /// Define um IConfiguration global, lendo as seguintes configurações:
