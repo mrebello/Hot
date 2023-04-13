@@ -10,10 +10,12 @@
 			Inclui gerenciamento de configurações, logs (com log para email e arquivos), host (httpserver e host para serviços com instalação automática como serviço para linux e windows)
 		</Description>
 		<Copyright>Marcos Paulo Ferreira Rebello</Copyright>
-		<AssemblyVersion>1.0.*</AssemblyVersion>
-		<VersionPrefix>1.0.1</VersionPrefix>
-		<VersionSuffix>beta</VersionSuffix>
-		<Deterministic>false</Deterministic>
+		<VersionBase>1.0</VersionBase>
+		<VersionSuffix>-beta</VersionSuffix>
+		<AssemblyVersion>$(VersionBase).$([System.DateTime]::Now.Subtract("2000-01-01").Days).$([System.DateTime]::Now.TimeOfDay.TotalMinutes.ToString("0"))</AssemblyVersion>
+		<FileVersion>$(AssemblyVersion)</FileVersion>
+		<VersionPrefix>$(AssemblyVersion)</VersionPrefix>
+		<Version>$(VersionPrefix)$(VersionSuffix)</Version>
 		<Platforms>AnyCPU;x64</Platforms>
 		<PlatformTarget>AnyCPU</PlatformTarget>
 		<UserSecretsId>Senhas</UserSecretsId>
@@ -27,7 +29,6 @@
 		<IncludeSymbols>True</IncludeSymbols>
 		<PackageId>HotLIB</PackageId>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<Version>$(VersionPrefix)-$(VersionSuffix)</Version>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
