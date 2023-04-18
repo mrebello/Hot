@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting.Internal;
+﻿using Hot.Extensions;
+using Microsoft.Extensions.Hosting.Internal;
 
 namespace Hot;
 
@@ -73,6 +74,15 @@ public class HotConfiguration : IConfiguration {
     /// Variável com o assembly que contém os recursos embutidos da aplicação
     /// </summary>
     private static Assembly asm_resource;
+
+    /// <summary>
+    /// Variável com o assembly que contém os recursos embutidos da HotLib
+    /// </summary>
+    private static Assembly asmHot_resource;
+    /// <summary>
+    /// Variável com o assembly que contém os recursos embutidos da HotAPI, caso esteja disponível
+    /// </summary>
+    private static Assembly? asmHotAPI_resource;
 #pragma warning restore CS8618
 
     /// <summary>
@@ -86,7 +96,7 @@ public class HotConfiguration : IConfiguration {
     /// <param name="sub_name"></param>
     /// Nome do do stream a pegar (sem o assemblyname)
     /// <returns></returns>
-    public Stream? GetAsmStream(string sub_name) => asm_resource.GetManifestResourceStream(asm_resource.GetName().Name + "." + sub_name);
+    public Stream? GetAsmStream(string sub_name) => asm_resource.GetAsmStream(sub_name);
 
     /// <summary>
     /// Retorna com stream incorporado dentro da lib Hot, adicionando o pré-nome do assembler.
@@ -144,7 +154,9 @@ public class HotConfiguration : IConfiguration {
                 var stackFrame = new System.Diagnostics.StackTrace(1);
                 asm_resource = stackFrame.GetFrame(stackFrame.FrameCount - 1)?.GetMethod()?.ReflectedType?.Assembly ??
                     System.Reflection.Assembly.GetExecutingAssembly();
-
+                asmHot_resource = typeof(HotConfiguration).Assembly;
+                asmHotAPI_resource = AppDomain.CurrentDomain.GetAssemblies().Where((i) => i.FullName?.StartsWith("HotAPI,") ?? false)?.FirstOrDefault();
+                
                 var asm_name = asm_resource.GetName().Name;
                 // pega environment sem usar 'host'. Prioridades:
                 // 1 - nome da máquina (se inicia com RS-DS é Development)
@@ -165,6 +177,20 @@ public class HotConfiguration : IConfiguration {
 
                 var confBuilder = new ConfigurationBuilder();
                 confBuilder.SetBasePath(Directory.GetCurrentDirectory());
+
+                // Le appsettings da HotLib (que possui os valores defaults)
+                var appsttings_embeddedHot = asmHot_resource.GetAsmStream("appsettings.json");
+                if (appsttings_embeddedHot == null)
+                    throw new ConfigurationErrorsException("appsettings.json da HotLib não encontrado!");
+                confBuilder.AddJsonStream(appsttings_embeddedHot);
+
+                // Le appsettings da HotAPI, se disponíveis (que possui os valores defaults)
+                if (asmHotAPI_resource is not null) {
+                    var appsttings_embeddedHotAPI = asmHotAPI_resource.GetAsmStream("appsettings.json");
+                    if (appsttings_embeddedHotAPI == null)
+                        throw new ConfigurationErrorsException("appsettings.json da HotAPI não encontrado!");
+                    confBuilder.AddJsonStream(appsttings_embeddedHotAPI);
+                }
 
                 configSearchPath += "- default values embedded in executable" + Environment.NewLine;
                 var appsttings_embedded = asm_resource.GetManifestResourceStream(asm_name + ".appsettings.json");

@@ -293,6 +293,19 @@ namespace Hot.Extensions {
             return s;
         }
 
+        /// <summary>
+        /// Return a string with valid filename caracters (ASCII 7 bits). If NoPath, '\'and '/' is translated to '_'
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <returns></returns>
+        public static String To_FileName(this String filename, Boolean NoPath = false) {
+            String f = filename.Tira_Acentos().Translate("*&$@!?|'\"", "_________");
+            if (NoPath)
+                f = f.Translate("/\\", "__");
+            return f;
+        }
 
-}
+
+
+    }
 }

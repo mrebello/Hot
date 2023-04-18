@@ -3,6 +3,7 @@ Description=%(ServiceDescription)%
 After=network.target network-online.target nss-lookup.target
 
 [Service]
+Environment="DOTNET_BUNDLE_EXTRACT_BASE_DIR=%h/.net"
 Type=notify
 ExecStart=%(ExecutableFullName)% --daemon
 

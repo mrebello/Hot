@@ -52,11 +52,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<None Remove="appsettings.json" />
 		<None Remove="Help_Parameters.txt" />
 		<None Remove="template.service" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<EmbeddedResource Include="appsettings.json" />
 		<EmbeddedResource Include="Help_Parameters.txt" />
 		<EmbeddedResource Include="template.service" />
 	</ItemGroup>
