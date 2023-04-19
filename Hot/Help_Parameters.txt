@@ -14,7 +14,5 @@ Configuration parameters are accept in many forms. (/helpconfig)
 
 In command line, use ':', with or whitout leading '/' or '-':
 
-x Logging:Console:LogLevel:Default=Debug -> show logs
-bug /ENVIRONMENT=Development             -> Define environment to Development (bug is first parameter)
-
-A BUG in .net ignore the first parameter when call without 'dotnet' command leading. Put any thing on first parameter to workaround.
+Logging:Console:LogLevel:Default=Debug     -> show logs
+/ENVIRONMENT=Development                   -> Define environment to Development

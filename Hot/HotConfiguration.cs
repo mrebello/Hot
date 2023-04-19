@@ -119,6 +119,7 @@ public class HotConfiguration : IConfiguration {
         Debug = {Debugger.IsAttached}
         Configuração = {Config[ConfigConstants.Configuration]}
         Ambiente = {Config[ConfigConstants.Environment]}
+        Culture = {System.Globalization.CultureInfo.CurrentCulture}
         AppName = {Config[ConfigConstants.AppName]}
         Executable = {Config[ConfigConstants.ExecutableFullName]}
         Service name = {Config[ConfigConstants.ServiceName]}
@@ -149,8 +150,19 @@ public class HotConfiguration : IConfiguration {
             if (_configuration == null) {
                 //var executable_fullname = System.Environment.GetCommandLineArgs()[0];  // devolve o nome da DLL para aplicativos empacotados em arquivo único
                 var executable_fullname = System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName;
-                var executable_name = Path.GetFileNameWithoutExtension(executable_fullname);
+                if (IsDotNET(executable_fullname))
+                    executable_fullname = System.Environment.GetCommandLineArgs()[0];
                 var executable_path = Path.GetDirectoryName(System.Environment.GetCommandLineArgs()[0]) + Path.DirectorySeparatorChar;
+                if (IsDotNET(executable_fullname)) {  // se chamado explicitamente com "dotnet xxx"
+                    executable_fullname = System.Environment.GetCommandLineArgs()[1];
+                    executable_path = Path.GetDirectoryName(executable_fullname);
+                    if (executable_path.IsEmpty()) {
+                        executable_path = Directory.GetCurrentDirectory();
+                        executable_fullname = executable_path + Path.DirectorySeparatorChar + executable_fullname;
+                    }
+                    executable_path += Path.DirectorySeparatorChar;
+                }
+                var executable_name = Path.GetFileNameWithoutExtension(executable_fullname);
                 //Assembly asm_executing = System.Reflection.Assembly.GetExecutingAssembly();
                 // Ao invés do acima, pega o frame mais alto do stackFrame atual
                 var stackFrame = new System.Diagnostics.StackTrace(1);
@@ -353,7 +365,9 @@ public class HotConfiguration : IConfiguration {
 
     }
 
-    private static bool IsDotNET(string name) {
+    private static bool IsDotNET(string? name) {
+        if (name is null)
+            return false;
         return Path.GetFileName(name).StartsWith("dotnet", StringComparison.InvariantCultureIgnoreCase);
     }
 }

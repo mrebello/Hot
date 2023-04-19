@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System.Linq;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using static Hot.HotConfiguration;
 
@@ -18,6 +19,7 @@ namespace Hot {
         /// <param name="analisa_Parametros">Parâmetro opcional com a sub para analizar os parâmetros de linha de comando específicos</param>
         public static void MainDefault<service>(Analisa_Parametros? analisa_Parametros = null) where service : class, IHostedService {
             string[] args = Environment.GetCommandLineArgs();
+            args[0] = "";  // primeiro elemento é o nome do executável
 
             var hostBuilder = new HostBuilder();
 
@@ -35,10 +37,9 @@ namespace Hot {
                 .Build();
 
             bool execute = true;
+            bool daemon = false;
 
             Log.LogInformation(()=>Log.Msg(Config.Infos()));
-
-            bool daemon = false;
 
             if (Environment.UserInteractive) {
                 if (new[] { "/?", "-h", "-H", "-?", "--help", "/help" }.Any(args.Contains)) {
@@ -146,24 +147,30 @@ namespace Hot {
                 daemon = true;
             }
 
-            //if (analisa_Parametros != null) analisa_Parametros(args);
-            analisa_Parametros?.Invoke(args);
+            try {
+                //if (analisa_Parametros != null) analisa_Parametros(args);
+                analisa_Parametros?.Invoke(args);
+            } catch (Exception e) {
+                Log.LogCritical( e, "Erro analisando parâmetros.");
+            }
 
-            if (execute) {
-                if (!daemon && Environment.UserInteractive && !Console.IsInputRedirected) {
-                    host.RunAsync();
-                    try {
-                        Console.WriteLine("De [Enter] para encerrar.");
-                        Console.ReadLine();
-                        host.StopAsync();
-                    }
-                    catch (Exception e) {
-                        Log.LogError(e, "Erro ao pedir enter.");
+            try {
+                if (execute) {
+                    if (!daemon && Environment.UserInteractive && !Console.IsInputRedirected) {
+                        host.RunAsync();
+                        try {
+                            Console.WriteLine("De [Enter] para encerrar.");
+                            Console.ReadLine();
+                            host.StopAsync();
+                        } catch (Exception e) {
+                            Log.LogError(e, "Erro ao pedir enter.");
+                        }
+                    } else {
+                        host.Run();
                     }
                 }
-                else {
-                    host.Run();
-                }
+            } catch (Exception e) {
+                Log.LogCritical(e, "Erro ao executar o hosting.");
             }
         }
 
