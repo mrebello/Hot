@@ -148,12 +148,14 @@ public class HotConfiguration : IConfiguration {
     public HotConfiguration() {
         lock (InicializaLock) {
             if (_configuration == null) {
+                bool IsDotnetCmd = false;
                 //var executable_fullname = System.Environment.GetCommandLineArgs()[0];  // devolve o nome da DLL para aplicativos empacotados em arquivo único
                 var executable_fullname = System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName;
-                if (IsDotNET(executable_fullname))
+                if (IsDotNET(executable_fullname) || IsIIS(executable_fullname))
                     executable_fullname = System.Environment.GetCommandLineArgs()[0];
                 var executable_path = Path.GetDirectoryName(System.Environment.GetCommandLineArgs()[0]) + Path.DirectorySeparatorChar;
                 if (IsDotNET(executable_fullname)) {  // se chamado explicitamente com "dotnet xxx"
+                    IsDotnetCmd = true;
                     executable_fullname = System.Environment.GetCommandLineArgs()[1];
                     executable_path = Path.GetDirectoryName(executable_fullname);
                     if (executable_path.IsEmpty()) {
@@ -264,6 +266,7 @@ public class HotConfiguration : IConfiguration {
                 }
                 _configuration[ConfigConstants.Version] = asm_resource.GetName().Version?.ToString();
                 _configuration[ConfigConstants.ExecutableFullName] = executable_fullname;
+                _configuration[ConfigConstants.IsDotnetCmd] = IsDotnetCmd.ToStr();
 
                 _configuration[ConfigConstants.ServiceName] = asm_resource.GetCustomAttribute<AssemblyTitleAttribute>()?.Title ?? "";
                 _configuration[ConfigConstants.ServiceDisplayName] = asm_resource.GetCustomAttribute<AssemblyProductAttribute>()?.Product ?? "";
@@ -363,6 +366,12 @@ public class HotConfiguration : IConfiguration {
         /// </summary>
         public const string IgnorePrefix = "IgnorePrefix";
 
+        /// <summary>
+        /// Devolve se foi executado com o wrapper de linha de comando "dotnet" (linux, normalmente)
+        /// </summary>
+        public const string IsDotnetCmd = "IsDotnetCmd";
+
+
     }
 
     private static bool IsDotNET(string? name) {
@@ -370,4 +379,12 @@ public class HotConfiguration : IConfiguration {
             return false;
         return Path.GetFileName(name).StartsWith("dotnet", StringComparison.InvariantCultureIgnoreCase);
     }
+
+    private static bool IsIIS(string? name) {
+        if (name is null)
+            return false;
+        var n = Path.GetFileName(name);
+        return n.StartsWith("iis.exe", StringComparison.InvariantCultureIgnoreCase) || n.StartsWith("iisexpress.exe", StringComparison.InvariantCultureIgnoreCase);
+    }
+
 }
