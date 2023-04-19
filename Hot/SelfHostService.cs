@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Globalization;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using static Hot.HotConfiguration;
@@ -40,6 +41,19 @@ namespace Hot {
             bool daemon = false;
 
             Log.LogInformation(()=>Log.Msg(Config.Infos()));
+
+            //System.Resources.ResourceManager rm = new(typeof(Hot.Properties.Modelos));
+
+            //var t1 = rm.GetString("Teste1");
+            
+            Properties.Modelos.Culture = CultureInfo.CurrentCulture;
+            var s = Properties.Modelos.Teste1;
+
+            Properties.Modelos.Culture = CultureInfo.CreateSpecificCulture("en-US");
+            var s2 = Properties.Modelos.Teste1;
+
+            Properties.Modelos.Culture = CultureInfo.CreateSpecificCulture("fr");
+            var s3 = Properties.Modelos.Teste1;
 
             if (Environment.UserInteractive) {
                 if (new[] { "/?", "-h", "-H", "-?", "--help", "/help" }.Any(args.Contains)) {

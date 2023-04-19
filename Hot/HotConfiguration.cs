@@ -75,16 +75,16 @@ public class HotConfiguration : IConfiguration {
     /// <summary>
     /// Variável com o assembly que contém os recursos embutidos da aplicação
     /// </summary>
-    private static Assembly asm_resource;
+    public static Assembly asm_resource;
 
     /// <summary>
     /// Variável com o assembly que contém os recursos embutidos da HotLib
     /// </summary>
-    private static Assembly asmHot_resource;
+    public static Assembly asmHot_resource;
     /// <summary>
     /// Variável com o assembly que contém os recursos embutidos da HotAPI, caso esteja disponível
     /// </summary>
-    private static Assembly? asmHotAPI_resource;
+    public static Assembly? asmHotAPI_resource;
 #pragma warning restore CS8618
 
     /// <summary>

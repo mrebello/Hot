@@ -25,7 +25,7 @@
 		<PackageIcon>HotLIB.png</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryUrl>https://github.com/mrebello/Hot</RepositoryUrl>
-		<NeutralLanguage>pt-BR</NeutralLanguage>
+		<NeutralLanguage>en</NeutralLanguage>
 		<IncludeSymbols>True</IncludeSymbols>
 		<PackageId>HotLIB</PackageId>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -78,6 +78,21 @@
 		<PackageReference Include="System.Data.SqlClient" Version="4.8.3" />
 		<PackageReference Include="System.Resources.ResourceManager" Version="4.3.0" />
 		<PackageReference Include="System.Security.Cryptography.Xml" Version="6.0.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="Properties\Modelos.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Modelos.resx</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Update="Properties\Modelos.resx">
+	    <Generator>ResXFileCodeGenerator</Generator>
+	    <LastGenOutput>Modelos.Designer.cs</LastGenOutput>
+	  </EmbeddedResource>
 	</ItemGroup>
 
 	<ItemGroup>
