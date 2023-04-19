@@ -1,5 +1,6 @@
 ﻿using Hot.Extensions;
 using Microsoft.Extensions.Hosting.Internal;
+using System.Linq;
 
 namespace Hot;
 
@@ -37,7 +38,8 @@ public class HotConfiguration : IConfiguration {
     /// <param name="passwd">Número de senha interno a ser passado - para garantir que não será chamado pelo usuário.</param>
     [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
     public void __Set_ServiceProvider(IServiceProvider serviceProvider, int passwd) {
-        if (passwd != 675272) throw new Exception("ESTE MÉTODO NÃO DEVE SER USADO PELO USUÁRIO DA BIBLIOTECA.");
+        if (passwd != 675272)
+            throw new Exception("ESTE MÉTODO NÃO DEVE SER USADO PELO USUÁRIO DA BIBLIOTECA.");
         _serviceprovider = serviceProvider;
     }
 
@@ -132,7 +134,7 @@ public class HotConfiguration : IConfiguration {
     static object InicializaLock = new object();
 
     public static string configSearchPath = "";
-    public string this[string key] { 
+    public string this[string key] {
         get => _configuration[key];
         set => onlineProvider.Set(key, value); // _configuration[key] = value;
     }
@@ -156,7 +158,7 @@ public class HotConfiguration : IConfiguration {
                     System.Reflection.Assembly.GetExecutingAssembly();
                 asmHot_resource = typeof(HotConfiguration).Assembly;
                 asmHotAPI_resource = AppDomain.CurrentDomain.GetAssemblies().Where((i) => i.FullName?.StartsWith("HotAPI,") ?? false)?.FirstOrDefault();
-                
+
                 var asm_name = asm_resource.GetName().Name;
                 // pega environment sem usar 'host'. Prioridades:
                 // 1 - nome da máquina (se inicia com RS-DS é Development)
@@ -170,7 +172,7 @@ public class HotConfiguration : IConfiguration {
 
                 // Ambiente definido ou em variáveis de ambiente ou na linha de comando
                 env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? env;
-                var ee = Environment.GetCommandLineArgs().Where((s) => s.ToUpper().TrimStart(new char[] {'-', '/'}).StartsWith("ENVIRONMENT"));
+                var ee = Environment.GetCommandLineArgs().Where((s) => s.ToUpper().TrimStart(new char[] { '-', '/' }).StartsWith("ENVIRONMENT"));
                 if (ee.Count() > 0) {
                     env = ee.Last().After("=");
                 }
@@ -193,8 +195,9 @@ public class HotConfiguration : IConfiguration {
                 }
 
                 configSearchPath += "- default values embedded in executable" + Environment.NewLine;
-                var appsttings_embedded = asm_resource.GetManifestResourceStream(asm_name + ".appsettings.json");
-                if (appsttings_embedded == null) throw new ConfigurationErrorsException("appsettings.json deve ser recurso inserido.");
+                var appsttings_embedded = asm_resource.GetAsmStream("appsettings.json");
+                if (appsttings_embedded == null)
+                    throw new ConfigurationErrorsException("appsettings.json deve ser recurso inserido.");
                 confBuilder.AddJsonStream(appsttings_embedded);
 
                 configSearchPath += "- environment variables started with DOTNET_" + Environment.NewLine;
@@ -202,7 +205,7 @@ public class HotConfiguration : IConfiguration {
 
                 configSearchPath += "- environment variables started with ASPNETCORE_" + Environment.NewLine;
                 confBuilder.AddEnvironmentVariables(prefix: "ASPNETCORE_");
-                
+
                 void add_file(string f) {
                     configSearchPath += "- " + f + Environment.NewLine;
                     confBuilder.AddJsonFile(f, true, true);
@@ -214,7 +217,15 @@ public class HotConfiguration : IConfiguration {
                 add_file($"{executable_path}appsettings.{env}.json");
 
                 configSearchPath += "- command line parameters" + Environment.NewLine;
-                confBuilder.AddCommandLine(Environment.GetCommandLineArgs());
+                string[] cmdline = Environment.GetCommandLineArgs();
+                // Primeiro parâmetro é o nome do executável, então, definir como "". Se for "dotnet xxx", zerar os 2 primeiros
+                if (IsDotNET(cmdline[0])) {
+                    cmdline[0] = "";
+                    cmdline[1] = "";
+                } else {
+                    cmdline[0] = "";
+                }
+                confBuilder.AddCommandLine(cmdline);
 
                 if (env == Environments.Development) {
                     configSearchPath += "AddSecrets adicionado.";
@@ -260,8 +271,10 @@ public class HotConfiguration : IConfiguration {
         /// <example>Information</example>
         /// <param name="reload">True if is to reload configurations</param>
         public void Set(string key, string value, bool reload = false) {
-            if (!String.IsNullOrEmpty(key)) Data[key] = value;
-            if (reload) base.OnReload();
+            if (!String.IsNullOrEmpty(key))
+                Data[key] = value;
+            if (reload)
+                base.OnReload();
         }
 
         public new void OnReload() => OnReload();
@@ -338,5 +351,9 @@ public class HotConfiguration : IConfiguration {
         /// </summary>
         public const string IgnorePrefix = "IgnorePrefix";
 
+    }
+
+    private static bool IsDotNET(string name) {
+        return Path.GetFileName(name).StartsWith("dotnet", StringComparison.InvariantCultureIgnoreCase);
     }
 }

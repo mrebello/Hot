@@ -150,7 +150,7 @@ namespace Hot {
             analisa_Parametros?.Invoke(args);
 
             if (execute) {
-                if (!daemon && Environment.UserInteractive) {
+                if (!daemon && Environment.UserInteractive && !Console.IsInputRedirected) {
                     host.RunAsync();
                     try {
                         Console.WriteLine("De [Enter] para encerrar.");
