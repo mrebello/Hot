@@ -5,10 +5,8 @@
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<Title>Hot Framework</Title>
-		<Description>
-			Biblioteca de funções Hot, padronizando a criação de aplicações em .NET.
-			Inclui gerenciamento de configurações, logs (com log para email e arquivos), host (httpserver e host para serviços com instalação automática como serviço para linux e windows)
-		</Description>
+		<Description>Classes para a criação simplificada de aplicações em .NET.
+Inclui gerenciamento de configurações, logs (com log para email e arquivos), hosting (httpserver e host para serviços com instalação automática como serviço para linux e windows), etc.</Description>
 		<Copyright>Marcos Paulo Ferreira Rebello</Copyright>
 		<VersionBase>1.0</VersionBase>
 		<VersionSuffix>-beta</VersionSuffix>
@@ -25,7 +23,6 @@
 		<PackageIcon>HotLIB.png</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryUrl>https://github.com/mrebello/Hot</RepositoryUrl>
-		<NeutralLanguage>en</NeutralLanguage>
 		<IncludeSymbols>True</IncludeSymbols>
 		<PackageId>HotLIB</PackageId>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -92,6 +89,10 @@
 		<None Update="HotLIB.png">
 			<Pack>True</Pack>
 			<PackagePath>\</PackagePath>
+		</None>
+		<None Update="README.md">
+		  <Pack>True</Pack>
+		  <PackagePath>\</PackagePath>
 		</None>
 	</ItemGroup>
 

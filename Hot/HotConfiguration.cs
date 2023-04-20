@@ -260,6 +260,7 @@ public class HotConfiguration : IConfiguration {
                 _configuration[ConfigConstants.Configuration] = "Release";
 #endif
                 _configuration[ConfigConstants.Environment] = env;
+                _configuration[ConfigConstants.IsDevelopment] = (env == Environments.Development).ToStr();
 
                 if (_configuration[ConfigConstants.AppName] == null) {
                     _configuration[ConfigConstants.AppName] = (executable_name ?? asm_name ?? "").TrimEnd(".exe");
@@ -305,6 +306,11 @@ public class HotConfiguration : IConfiguration {
         /// Devolve o ambiente do sistema (Development ou Production)
         /// </summary>
         public const string Environment = "Environment";
+
+        /// <summary>
+        /// True se ambiente é Development, senão False
+        /// </summary>
+        public const string IsDevelopment = "IsDevelopment";
 
         /// <summary>
         /// Devolve o nome da aplicação (nome do executável, nome do assembler ou definido nas configurações)
