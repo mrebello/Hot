@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Policy;
 using static Hot.HotConfiguration;
 
 namespace Hot {
@@ -201,6 +202,13 @@ namespace Hot {
             }
         }
 
+        private static string updateurl() {
+            string url = Config[ConfigConstants.Update.URL];
+            return url +
+                (HotConfiguration.asmHotAPI_resource == null ? "" : "HotAPI/") +
+                "version";
+        }
+
         public static void StartAutoUpdate() {
             //Thread.Sleep(1000);
             try {
@@ -211,12 +219,13 @@ namespace Hot {
 
                 using var hc = new HttpClient();
                 try {
-                    destination = hc.GetStringAsync(url + "version").Result;
+                    destination = hc.GetStringAsync(updateurl()).Result;
                 }
                 catch (Exception) {
                 }
                 if (destination.IsEmpty()) throw new Exception("Erro ao pegar a versão atual.");
 
+                destination = destination.Item(1, "\r\n");   // descarta versão das libs
                 string app_destination = destination.Item(1, "\t");
                 string version_destination = destination.Item(2, "\t");
 
@@ -253,11 +262,11 @@ namespace Hot {
                 while (!ok && tentativas >= 0) {
                     Thread.Sleep(500); // aguarda processar
                     try {
-                        v = hc.GetStringAsync(url + "version").Result;
+                        v = hc.GetStringAsync(updateurl()).Result;
                     }
                     catch (Exception) {
                     }
-                    if (v.Item(2, "\t") == version_me) {
+                    if (v.Item(1,"\r\n").Item(2, "\t") == version_me) {
                         ok = true;
                         break;
                     }

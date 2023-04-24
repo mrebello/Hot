@@ -21,7 +21,12 @@
         }
 
         public static string Version() {
-            return Config[ConfigConstants.AppName] + '\t' + Config[ConfigConstants.Version];
+            string version = Config[ConfigConstants.AppName] + '\t' + Config[ConfigConstants.Version] + "\r\n" +
+                HotConfiguration.asmHot_resource.GetName().Name + '\t' + HotConfiguration.asmHot_resource.GetName().Version?.ToString();
+            if (HotConfiguration.asmHotAPI_resource != null) {
+                version += "\r\n" + HotConfiguration.asmHotAPI_resource.GetName().Name + '\t' + HotConfiguration.asmHotAPI_resource.GetName().Version?.ToString();
+            }
+            return version;
         }
 
         public static string Infos() {

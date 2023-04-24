@@ -97,11 +97,12 @@ public class HotConfiguration : IConfiguration {
     /// Variável com o assembly que contém os recursos embutidos da HotLib
     /// </summary>
     public static Assembly asmHot_resource;
+#pragma warning restore CS8618
+
     /// <summary>
     /// Variável com o assembly que contém os recursos embutidos da HotAPI, caso esteja disponível
     /// </summary>
     public static Assembly? asmHotAPI_resource;
-#pragma warning restore CS8618
 
     /// <summary>
     /// Devolve o Assembly da aplicação (trata publicação em arquivo único)
