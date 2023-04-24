@@ -43,6 +43,19 @@ public class HotConfiguration : IConfiguration {
         _serviceprovider = serviceProvider;
     }
 
+    private static ILogger? LogHC = null;
+    /// <summary>
+    /// Flag para indicar se já ativou o Log (Primeiro inicializa as confs, depois inicializa o Log).
+    /// NÃO deve ser chamado pelo usuário da biblioteca. Possui atributo para não aparecer no IntelliSense.
+    /// </summary>
+    /// <param name="passwd">Número de senha interno a ser passado - para garantir que não será chamado pelo usuário.</param>
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    public static void __Set_LogOk(int passwd) {
+        if (passwd != 675272)
+            throw new Exception("ESTE MÉTODO NÃO DEVE SER USADO PELO USUÁRIO DA BIBLIOTECA.");
+        LogHC = Log.Create("HotConfig");
+    }
+
     /// <summary>
     /// Devolve o ServiceProvider da aplicação (definido no AppBuild ou, caso não exista, o genérico do sistema)
     /// </summary>
@@ -136,8 +149,14 @@ public class HotConfiguration : IConfiguration {
 
     public static string configSearchPath = "";
     public string this[string key] {
-        get => _configuration[key];
-        set => onlineProvider.Set(key, value); // _configuration[key] = value;
+        get {
+            LogHC?.LogTrace(() => Log.Msg("get Config[\"" + key + "\"] = " + _configuration[key]));
+            return _configuration[key];
+        } 
+        set {
+            LogHC?.LogTrace(() => Log.Msg("set Config[\"" + key + "\"] = " + value));
+            onlineProvider.Set(key, value); // _configuration[key] = value;
+        }
     }
     public void OnReload() => onlineProvider.OnReload();
     IEnumerable<IConfigurationSection> IConfiguration.GetChildren() => _configuration.GetChildren();

@@ -34,7 +34,7 @@ exemplo de uso: (instância *Config* é global, instanciada automaticamente pela
     string app_me = Config["AppName"];
 
 
-##Log
+## Log
 
 Usa **Microsoft.Extensions.Logging**, adicionado:
 
@@ -59,7 +59,7 @@ exemplos de uso:
         Log.LogInformation(() => Log.Msg( funcao_demorada(c) ));
 
 
-##BD
+## BD
 
 Classe para acesso a banco de dados (sqlserver, usando **System.Data.SqlClient**), adicionando:
 
@@ -89,7 +89,7 @@ uso na aplicação: (não é necessário nenhuma declaração antes do uso)
     BD.WEB.SQLCmd("UPDATE CRM_email_Enviado SET Data_leitura=getdate() WHERE Cod_CRM_email_Enviado=@1 AND Data_Leitura IS NULL", Cod_CRM_email_Enviado);
 
 
-##SelfHostedService
+## SelfHostedService
 
 Classe abstrata para ser usada para criação de serviços sefthosted.
 

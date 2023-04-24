@@ -2,29 +2,18 @@
 
 Rotinas básicas para aplicações, baseada em .NET 6, para serviços, envolvendo:
 
+
 ##Config
 
-Usa **System.Configuration.ConfigurationManager**.
+Diversos pontos implementados para melhorar o *Log* padrão do .NET:
 
-Sequência dos locais de configuração padrão alterados para permitir que o *appsettings.json* fique embutido no executável. 
-
- adicionando:
-
-- classe estática global para uso na aplicação como um todo
-- Ambiente de desenvolvimento "Development" definido via variável de ambiente nas propriedades de depuração (DOTNET_ENVIRONMENT=Development) ou parâmetros na linha de comando
-- configurações 'padrão' do aplicativo ficam no arquivo AppSettings.JSON, que deve estar incorporado no APP
-- Procura configuração também em {exename}.conf e em /etc/{assemblername}.conf antes da linha de comando
-- Linha de comando = appupdate.exe /MySetting:SomeValue=123
-- Variáveis de Ambiente = set Logging__LogLevel__Microsoft=Information      (__ ao invés de : na variável de ambiente em sistemas linux)
+- Usa **System.Configuration.ConfigurationManager**.
+- Implementa _Log_ por email e em arquivo
+- *appsettings.json* fique embutido no executável. 
+- pesquisa arquivos de configurações em uma sequência padrão de locais
+- classe estática global para uso na aplicação como um todo, independente da sequência de inicialização da injeção de dependência confusa original. 
 
 Uso normal:
-
-- appsettings.json incorporado na aplicação
-- appsettings.Development.json não incorporado
-- *user-secrets* para guardar senhas de desenvolvimento
-- *xxxxx.json* (xxxxx = nome do executável) para guardar configurações do ambiente de execução (para permitir empacotamento em arquivo único, e uso de diversos microserviços em mesmo diretório)
-
-exemplo de uso: (instância *Config* é global, instanciada automaticamente pela biblioteca)
 
     string app_me = Config["AppName"];
 
@@ -38,7 +27,7 @@ Usa **Microsoft.Extensions.Logging**, adicionado:
 
 exemplos de uso:
 
-- padrão (instância *Log* é global, instanciada automaticamente pela biblioteca)
+- padrão (instância estática *Log* é global, instanciada automaticamente pela biblioteca)
 
         Log.LogError($"Tentativa de atualização de IP não autorizado. IP: {IPOrigem}");
 
@@ -54,49 +43,17 @@ exemplos de uso:
         Log.LogInformation(() => Log.Msg( funcao_demorada(c) ));
 
 
-##BD
-
-Classe para acesso a banco de dados (sqlserver, usando **System.Data.SqlClient**), adicionando:
-
-- Conexão automática (com ou sem transação), com retry automático
-- Comandos SQL com parâmetros de forma simples
-- Log dos comandos (nível de log nas configurações)
-
-declaração para uso com diversos bancos na aplicação:
-
-    global using static nnnn.BD.SQL;
-
-    namespace nnnnn.BD {
-        public class BDs : BD_simples {
-            public BDs() : base(null) {
-            }
-            public BD_simples WEB = new BD_simples("WEB");
-            public BD_simples ASPPREV = new BD_simples("ASPPREV");
-        }
-
-        public static class SQL {
-            public static BDs BD = new BDs();
-        }
-    }
-
-uso na aplicação: (não é necessário nenhuma declaração antes do uso)
-
-    BD.WEB.SQLCmd("UPDATE CRM_email_Enviado SET Data_leitura=getdate() WHERE Cod_CRM_email_Enviado=@1 AND Data_Leitura IS NULL", Cod_CRM_email_Enviado);
-
-
 ##SelfHostedService
 
 Classe abstrata para ser usada para criação de serviços sefthosted.
 
 Baseada no **IHostedService**, adicionando:
 
-- *MainDefault* para ser usada como função básica da classe, que implementa parâmetros padrões de linha de comando:
-    - /? - help
-    - /helpconfig  - lista sequência de pesquisa de arquivos de configuração
-    - /install
-    - /uninstall   - instala a aplicação como serviço do windows (falta implementar linux). Dados de nome do serviço e descrição são pegos dos metadados da aplicação)
-    - /autoupdate  - recurso para atualização do executável 'de produção' automaticamente via nova versão do desenvolvimento, tratando também a aplicação *em produção* instalada como serviço do windows (apenas para aplicações httpserver)
-- método **StartAsync** e **StopAsync** abstratos para implementação do serviço
+- *MainDefault* para ser usada como função básica da classe, que implementa parâmetros padrões de linha de comando: help, helpconfig, install, uninstall, infos, version
+- install/uninstall   - instala a aplicação como serviço do windows ou linux (systemd). Dados de nome e descrição do serviço são pegos dos metadados da aplicação.
+- autoupdate  - recurso para publicação de nova versão do executável 'de produção' mesmo quando instalado como serviço automaticamente via nova versão do desenvolvimento, tratando também a aplicação *em produção* instalada como serviço do windows (apenas para aplicações httpserver)
+- Uso da configuração padrão da biblioteca
+
 
 ## HttpServer
 
@@ -118,15 +75,24 @@ exemplo de uma **aplicação** de httpserver:
             string url = RemoveIgnorePrefix(context?.Request.Url?.LocalPath);
 
             if (url == "/teste") {
-                string infos = $@"Infos:
-                  IsWindows = {Config["IsWindows"]}
-                  IsLinux = {Config["IsLinux"]}
-                  Ambiente = {Config["Environment"]}
-                  AppName = {Config["AppName"]}
-                  Config search path = {HotConfiguration.configSearchPath}
-                  Teste = {Config["Teste"]}";
-
+                string infos = Config.Infos();
                 context?.Response.Send(infos.ReplaceLineEndings("<br>"));
             }
         }
     }
+
+Para a criação de APIs Web, use a <a href="https://github.com/mrebello/HotAPI">HotAPI</a>.
+
+
+##BD
+
+Classe para acesso a direto a banco de dados (*database first*, sem uso de ORM, ao sqlserver, usando **System.Data.SqlClient**):
+
+- Conexão automática (com ou sem transação), com retry automático
+- Comandos SQL com parâmetros de forma simples
+- Log dos comandos (nível de log nas configurações)
+- String de conexão nas configurações
+
+uso na aplicação: (não é necessário nenhuma declaração antes do uso)
+
+    BD.SQLCmd("UPDATE CRM_email_Enviado SET Data_leitura=getdate() WHERE Cod_CRM_email_Enviado=@1 AND Data_Leitura IS NULL", Cod_CRM_email_Enviado);

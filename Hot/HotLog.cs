@@ -8,7 +8,9 @@ namespace Hot {
         /// </summary>public class config {
         public class log {
             public readonly static HotLog Log = new HotLog();
-            public static void HotLog_Init() { }  // Provoca chamada do construtor
+            public static void HotLog_Init() {
+                HotConfiguration.__Set_LogOk(675272);
+            }  // Provoca chamada do construtor
         }
 
         // Implementação com variável local static para 'singletron'
