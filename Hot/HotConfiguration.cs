@@ -53,7 +53,10 @@ public class HotConfiguration : IConfiguration {
     public static void __Set_LogOk(int passwd) {
         if (passwd != 675272)
             throw new Exception("ESTE MÉTODO NÃO DEVE SER USADO PELO USUÁRIO DA BIBLIOTECA.");
-        LogHC = Log.Create("HotConfig");
+        try {
+            LogHC = Log.Create("HotConfig");
+        } catch (Exception) {
+        }
     }
 
     /// <summary>
@@ -214,14 +217,14 @@ public class HotConfiguration : IConfiguration {
                 confBuilder.SetBasePath(Directory.GetCurrentDirectory());
 
                 // Le appsettings da HotLib (que possui os valores defaults)
-                var appsttings_embeddedHot = asmHot_resource.GetAsmStream("appsettings.json");
+                var appsttings_embeddedHot = asmHot_resource.GetManifestResourceStream("Hot.appsettings.json");
                 if (appsttings_embeddedHot == null)
                     throw new ConfigurationErrorsException("appsettings.json da HotLib não encontrado!");
                 confBuilder.AddJsonStream(appsttings_embeddedHot);
 
                 // Le appsettings da HotAPI, se disponíveis (que possui os valores defaults)
                 if (asmHotAPI_resource is not null) {
-                    var appsttings_embeddedHotAPI = asmHotAPI_resource.GetAsmStream("appsettings.json");
+                    var appsttings_embeddedHotAPI = asmHotAPI_resource.GetManifestResourceStream("HotAPI.appsettings.json");
                     if (appsttings_embeddedHotAPI == null)
                         throw new ConfigurationErrorsException("appsettings.json da HotAPI não encontrado!");
                     confBuilder.AddJsonStream(appsttings_embeddedHotAPI);

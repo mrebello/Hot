@@ -71,21 +71,6 @@ Inclui gerenciamento de configurações, logs (com log para email e arquivos), h
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Update="Properties\Modelos.Designer.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>Modelos.resx</DependentUpon>
-	  </Compile>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <EmbeddedResource Update="Properties\Modelos.resx">
-	    <Generator>ResXFileCodeGenerator</Generator>
-	    <LastGenOutput>Modelos.Designer.cs</LastGenOutput>
-	  </EmbeddedResource>
-	</ItemGroup>
-
-	<ItemGroup>
 		<None Update="HotLIB.png">
 			<Pack>True</Pack>
 			<PackagePath>\</PackagePath>
@@ -94,6 +79,10 @@ Inclui gerenciamento de configurações, logs (com log para email e arquivos), h
 		  <Pack>True</Pack>
 		  <PackagePath>\</PackagePath>
 		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Properties\" />
 	</ItemGroup>
 
 </Project>
