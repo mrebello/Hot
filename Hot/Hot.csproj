@@ -26,6 +26,7 @@ Inclui gerenciamento de configurações, logs (com log para email e arquivos), h
 		<IncludeSymbols>True</IncludeSymbols>
 		<PackageId>HotLIB</PackageId>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

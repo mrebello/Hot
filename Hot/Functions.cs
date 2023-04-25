@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Drawing;
-using System.Text;
-using System.Text.Unicode;
+﻿using Hot.Extensions;
 
 namespace Hot;
 
@@ -31,11 +28,13 @@ public static class Functions {
             while (d1 > 0) {
                 Soma += Mult * (int)(d1 % 10);
                 Mult++;
-                if (Mult > LimMult) Mult = 2;
+                if (Mult > LimMult)
+                    Mult = 2;
                 d1 = d1 / 10;
             }
             d1 = 11 - (Soma % 11);
-            if (d1 >= 10) d1 = 0;
+            if (d1 >= 10)
+                d1 = 0;
             Dado = (Dado * 10) + d1;
             n++;
         }
@@ -61,8 +60,7 @@ public static class Functions {
     public static Int32 CPFn(string CPF) {
         try {
             return (Int32)(decimal.Parse(CPF.Replace(".", "").Replace("-", "")) / 100);
-        }
-        catch (Exception) {
+        } catch (Exception) {
         }
         return 0;
     }
@@ -84,8 +82,7 @@ public static class Functions {
     public static string CPF_Formatado(string CPF) {
         if (String.IsNullOrEmpty(CPF)) {
             return "      -       ";
-        }
-        else {
+        } else {
             int C = CPFn(CPF);
             return CPF_Completo(C);
         }
@@ -103,7 +100,8 @@ public static class Functions {
         String r = String.Empty;
         var info = new System.IO.FileInfo(filename);
         if (info.Exists) {
-            if (info.Length > int.MaxValue / 16) throw new Exception("Arquivo muito grande: " + filename);
+            if (info.Length > int.MaxValue / 16)
+                throw new Exception("Arquivo muito grande: " + filename);
             using (System.IO.StreamReader reader = new System.IO.StreamReader(filename, System.Text.Encoding.UTF8)) {
                 r = reader.ReadToEnd();
                 reader.Close();
@@ -167,14 +165,18 @@ public static class Functions {
     /// <returns>s1&lt;s2 = -1; s1=s2 = 0; s1&gt;s2 = 1</returns>
     public static int Compare_String_RightAlign(string s1, string s2) {
         var delimiters = new char[] { ' ', '\t', '\r', '\n' };
-        if (s1 == null) s1 = "";
-        if (s2 == null) s2 = "";
+        if (s1 == null)
+            s1 = "";
+        if (s2 == null)
+            s2 = "";
         s1 = s1.TrimEnd(delimiters);
         s1 = s1.TrimStart(delimiters);
         s2 = s2.TrimEnd(delimiters);
         s2 = s2.TrimStart(delimiters);
-        if (s1.Length > s2.Length) s2 = s2.PadLeft(s1.Length, '0');
-        if (s2.Length > s1.Length) s1 = s1.PadLeft(s1.Length, '0');
+        if (s1.Length > s2.Length)
+            s2 = s2.PadLeft(s1.Length, '0');
+        if (s2.Length > s1.Length)
+            s1 = s1.PadLeft(s1.Length, '0');
         return s1.CompareTo(s2);
     }
 
@@ -187,15 +189,19 @@ public static class Functions {
     /// 0  - version identical (or both is null)
     /// 1  - version2 > version 1</returns>
     public static int Compare_Versions(string version1, string version2) {
-        if (version1 == null && version2 == null) return 0;
-        if (version1 == null) return 1;
-        if (version2 == null) return -1;
+        if (version1 == null && version2 == null)
+            return 0;
+        if (version1 == null)
+            return 1;
+        if (version2 == null)
+            return -1;
         int r = 0;
-        while (version1.IndexOf('.')>=0) {
+        while (version1.IndexOf('.') >= 0) {
             var p1 = version1.Before(".");
             var p2 = version2.Before(".");
-            r =p1.CompareTo(p2);
-            if (r != 0) return r;
+            r = p1.CompareTo(p2);
+            if (r != 0)
+                return r;
             version1 = version1.After(".");
             version2 = version2.After(".");
         }
@@ -240,7 +246,7 @@ public static class Functions {
             var ipAddressBits = BitConverter.ToUInt32(ipAddressArray, 0);
 
             // 'Get the mask/network address as unsigned integer.
-            uint mask = maskLength>0 ? uint.MaxValue << (32 - maskLength) : 0;
+            uint mask = maskLength > 0 ? uint.MaxValue << (32 - maskLength) : 0;
 
             // 'https//stackoverflow.com/a/1499284/3085985
             // 'Bitwise And mask And MaskAddress, this should be the same as mask And IpAddress
@@ -279,8 +285,9 @@ public static class Functions {
     /// <param name="subnetMaskList">ip/mask;ip/mask;...</param>
     /// <returns></returns>
     public static bool IP_IsInList(string ipAddress, string subnetMaskList) {
-        foreach(var s in subnetMaskList.Split(new char[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries)) {
-            if (IP_IsInSubnet(ipAddress, s.Trim())) return true;
+        foreach (var s in subnetMaskList.Split(new char[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries)) {
+            if (IP_IsInSubnet(ipAddress, s.Trim()))
+                return true;
         }
         return false;
     }
@@ -303,6 +310,43 @@ public static class Functions {
         } else {
             throw new NotImplementedException("StartURL não implementada para a plataforma.");
         }
+    }
+
+
+    /// <summary>
+    /// Cronometra o tempo de execução de A.
+    /// Mostra com Log.LogInformation() o tempo da execução, e retorna o número de milissegundos
+    /// <code>Cron( ()=> { codigo();... } );</code>
+    /// </summary>
+    /// <param name="A">Ação a ser cronometrada.</param>
+    /// <returns></returns>
+    public static long Cron(Action A) {
+        System.Diagnostics.Stopwatch sw = new();
+        Log.LogTrace("Iniciando cronometro sobre " + A.Method.Name);
+        sw.Start();
+        A();
+        sw.Stop();
+        var t = sw.ElapsedMilliseconds;
+        Log.LogInformation(A.Method.Name + " levou " + t + "ms.");
+        return t;
+    }
+
+    /// <summary>
+    /// Cronometra o tempo de execução de A, com identificação da ação.
+    /// Mostra com Log.LogInformation() o tempo da execução, e retorna o número de milissegundos
+    /// <code>Cron( ()=> { codigo();... } );</code>
+    /// </summary>
+    /// <param name="A">Ação a ser cronometrada.</param>
+    /// <returns></returns>
+    public static long Cron(string ActionName, Action A) {
+        System.Diagnostics.Stopwatch sw = new();
+        Log.LogTrace("Iniciando cronometro sobre " + ActionName);
+        sw.Start();
+        A();
+        sw.Stop();
+        var t = sw.ElapsedMilliseconds;
+        Log.LogInformation(ActionName + " levou " + t + "ms.");
+        return t;
     }
 
 }

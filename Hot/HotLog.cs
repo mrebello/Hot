@@ -13,7 +13,7 @@ public class HotLog : ILogger {
         /// </summary>
         /// <param name="Category"></param>
         /// <returns></returns>
-        public ILogger Create(string Category) => Log.Create(Category);
+        public static ILogger LogCreate(string Category) => Log.Create(Category);
 
         /// <summary>
         /// Método definido apenas para provocar a chamada à inicialização do Log.

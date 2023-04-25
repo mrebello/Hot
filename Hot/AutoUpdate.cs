@@ -1,10 +1,7 @@
-﻿using System.Net.Http;
-
-namespace Hot;
-
+﻿namespace Hot;
 
 public static class AutoUpdate {
-    static ILogger Log = HotLog.log.Log.Create("Hot.AutoUpdate");
+    static ILogger Log = LogCreate("Hot.AutoUpdate");
 
     public static bool Authorized(HttpListenerContext context) {
         bool r = false;
@@ -198,27 +195,25 @@ public static class AutoUpdate {
     }
 
 
-    private static string updateurl() {
+    private static string updateurl_base() {
         string url = Config[ConfigConstants.Update.URL];
-        return url +
-            (HotConfiguration.asmHotAPI_resource == null ? "" : "HotAPI/") +
-            "version";
+        return url + (HotConfiguration.asmHotAPI_resource == null ? "" : "HotAPI/");
     }
 
     public static void StartAutoUpdate() {
         //Thread.Sleep(1000);
         try {
-            string url = Config[ConfigConstants.Update.URL];
-            if (url.IsEmpty())
-                throw new ConfigurationErrorsException("'Update:URL' deve estar configurado em appsettings.json para autoupdate.");
+            if (Config[ConfigConstants.Update.URL].IsEmpty())
+                throw new ConfigurationErrorsException("'Update:URL' deve estar configurado.");
 
+            string urlbase = updateurl_base();
             string destination = "";
 
-            Log.LogInformation("Iniciando autoupdate na url " + updateurl());
+            Log.LogInformation("Iniciando autoupdate em: " + urlbase);
 
             using var hc = new HttpClient();
             try {
-                destination = hc.GetStringAsync(updateurl()).Result;
+                destination = hc.GetStringAsync(urlbase + "version").Result;
             } catch (Exception) {
             }
             if (destination.IsEmpty())
@@ -236,22 +231,25 @@ public static class AutoUpdate {
             }
 
             string version_me = Config[ConfigConstants.Version];
-            //var c = Compare_Versions(version_me, version_destination);
-            //if (c <= 0) {
-            //    string msg = c == 0 ? "Versões são iguais." : "Versão instalada é maior.";
-            //    throw new Exception(msg + " Não atualizado.");
-            //}
 
-            //Log.LogInformation($"Iniciando atualização da versão {version_destination} para a {version_me}.");
+            var c = Compare_Versions(version_me, version_destination);
+            if (c <= 0) {
+                string msg = c == 0 ? "Versões são iguais." : "Versão instalada é maior.";
+                throw new Exception(msg + " Não atualizado.");
+            }
+
+            Log.LogInformation($"Iniciando atualização da versão {version_destination} para a {version_me}.");
 
             var executable = File.OpenRead(Config[ConfigConstants.ExecutableFullName]);
+
+#warning -- Implementar tipo de executável
             // if (executable.Length < 4_500_000) throw new Exception("Arquivo não parece ser pacote publicado. Abortando.");
 
             using var fileStreamContent = new StreamContent(executable);
             // Considera possível erro de não receber resposta completa devido a shutdown do app server
             try {
                 hc.DefaultRequestHeaders.Add("UpdateSecret", Config[ConfigConstants.Update.Secret]);
-                var r = hc.PutAsync(updateurl() + "autoupdate", fileStreamContent).Result;
+                var r = hc.PutAsync(urlbase + "autoupdate", fileStreamContent).Result;
             } catch (Exception) {
             }
 
@@ -262,7 +260,7 @@ public static class AutoUpdate {
             while (!ok && tentativas >= 0) {
                 Thread.Sleep(500); // aguarda processar
                 try {
-                    v = hc.GetStringAsync(updateurl()).Result;
+                    v = hc.GetStringAsync(urlbase + "version").Result;
                 } catch (Exception) {
                 }
                 if (v.Item(1, "\r\n").Item(2, "\t") == version_me) {

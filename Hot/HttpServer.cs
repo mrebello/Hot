@@ -108,7 +108,7 @@ abstract public class HttpServer : SelfHostedService {
                     L.LogError("Erro ao iniciar a escuta na porta.");
                 }
             }
-            throw ex;
+            throw;
         }
 
         // método BeginGetContext não está liberando os recursos utilizados, então, feito o GetContext de modo síncrono

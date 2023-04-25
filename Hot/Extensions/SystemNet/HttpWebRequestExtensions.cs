@@ -56,9 +56,9 @@
                     if (r.Length > 0) {
                         throw new Exception("Data received: " + r, e);
                     } else {
-                        throw e;
+                        throw;
                     }
-                } else throw e;
+                } else throw;
             }
             if (response.StatusCode == HttpStatusCode.OK) {
                 return new StreamReader(response.GetResponseStream()).ReadToEnd();
