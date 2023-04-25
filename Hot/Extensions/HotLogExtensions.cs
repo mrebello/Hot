@@ -1,4 +1,4 @@
-﻿namespace Hot.Extensions.HotLogExtensions {
+﻿namespace Hot.Extensions {
     /// <summary>
     /// Extensão para HotLog provendo funções de log com LAMBDA.
     /// <b>Objetivo:</b> Usar funções com lambda para evitar perda de desempenho em chamadas longas caso o log esteja desativado

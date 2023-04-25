@@ -1,8 +1,4 @@
-﻿using Hot.Extensions;
-using Microsoft.Extensions.Hosting.Internal;
-using System.Linq;
-
-namespace Hot;
+﻿namespace Hot;
 
 /// <summary>
 /// Define um IConfiguration global, lendo as seguintes configurações:
@@ -319,89 +315,6 @@ public class HotConfiguration : IConfiguration {
         public new void OnReload() => OnReload();
     }
 
-    public static partial class ConfigConstants {
-        /// <summary>
-        /// Devolve a configuração do sistema (Debug ou Release), definida em tempo de compilação
-        /// </summary>
-        public const string Configuration = "Configuration";
-
-        /// <summary>
-        /// Devolve o ambiente do sistema (Development ou Production)
-        /// </summary>
-        public const string Environment = "Environment";
-
-        /// <summary>
-        /// True se ambiente é Development, senão False
-        /// </summary>
-        public const string IsDevelopment = "IsDevelopment";
-
-        /// <summary>
-        /// Devolve o nome da aplicação (nome do executável, nome do assembler ou definido nas configurações)
-        /// </summary>
-        public const string AppName = "AppName";
-
-        /// <summary>
-        /// Devolve a versão da aplicação (vem do assembler)
-        /// </summary>
-        public const string Version = "Version";
-
-        /// <summary>
-        /// Devolve o nome completo do executável (do assembler) da aplicação
-        /// </summary>
-        public const string ExecutableFullName = "ExecutableFullName";
-
-        /// <summary>
-        /// Configurações relacionadas ao autoupdate
-        /// </summary>
-        public static class Update {
-            /// <summary>
-            /// URL para onde será feita a conexão para o autoupdate.
-            /// </summary>
-            public const string URL = "Update:URL";
-
-            /// <summary>
-            /// Senha a ser verificada no autoupdate
-            /// </summary>
-            public const string Secret = "Update:Secret";
-
-            /// <summary>
-            /// Lista de IPs/Máscara de onde aceita autoupdate e infos
-            /// </summary>
-            public const string AcceptFrom = "Update:AcceptFrom";
-        }
-
-        /// <summary>
-        /// Nome do serviço (vem do título no assembler da aplicação)
-        /// </summary>
-        public const string ServiceName = "ServiceName";
-
-        /// <summary>
-        /// Nome do serviço a ser mostrado para o usuário (vem do nome do produto no assembler da aplicação)
-        /// </summary>
-        public const string ServiceDisplayName = "ServiceDisplayName";
-
-        /// <summary>
-        /// Descrição do serviço (vem da descrição no assembler da aplicação)
-        /// </summary>
-        public const string ServiceDescription = "ServiceDescription";
-
-        /// <summary>
-        /// Lista de prefixos a serem ouvidos, separada por ';'
-        /// </summary>
-        public const string URLs = "urls";
-
-        /// <summary>
-        /// Prefixo a ser ignorado no início da url. (proxypass, fastcgi, etc..) usado para ignorar início do path na url no pré-processamento de /version e /update
-        /// </summary>
-        public const string IgnorePrefix = "IgnorePrefix";
-
-        /// <summary>
-        /// Devolve se foi executado com o wrapper de linha de comando "dotnet" (linux, normalmente)
-        /// </summary>
-        public const string IsDotnetCmd = "IsDotnetCmd";
-
-
-    }
 
     private static bool IsDotNET(string? name) {
         if (name is null)
@@ -417,3 +330,88 @@ public class HotConfiguration : IConfiguration {
     }
 
 }
+
+public static partial class ConfigConstants {
+    /// <summary>
+    /// Devolve a configuração do sistema (Debug ou Release), definida em tempo de compilação
+    /// </summary>
+    public const string Configuration = "Configuration";
+
+    /// <summary>
+    /// Devolve o ambiente do sistema (Development ou Production)
+    /// </summary>
+    public const string Environment = "Environment";
+
+    /// <summary>
+    /// True se ambiente é Development, senão False
+    /// </summary>
+    public const string IsDevelopment = "IsDevelopment";
+
+    /// <summary>
+    /// Devolve o nome da aplicação (nome do executável, nome do assembler ou definido nas configurações)
+    /// </summary>
+    public const string AppName = "AppName";
+
+    /// <summary>
+    /// Devolve a versão da aplicação (vem do assembler)
+    /// </summary>
+    public const string Version = "Version";
+
+    /// <summary>
+    /// Devolve o nome completo do executável (do assembler) da aplicação
+    /// </summary>
+    public const string ExecutableFullName = "ExecutableFullName";
+
+    /// <summary>
+    /// Configurações relacionadas ao autoupdate
+    /// </summary>
+    public static class Update {
+        /// <summary>
+        /// URL para onde será feita a conexão para o autoupdate.
+        /// </summary>
+        public const string URL = "Update:URL";
+
+        /// <summary>
+        /// Senha a ser verificada no autoupdate
+        /// </summary>
+        public const string Secret = "Update:Secret";
+
+        /// <summary>
+        /// Lista de IPs/Máscara de onde aceita autoupdate e infos
+        /// </summary>
+        public const string AcceptFrom = "Update:AcceptFrom";
+    }
+
+    /// <summary>
+    /// Nome do serviço (vem do título no assembler da aplicação)
+    /// </summary>
+    public const string ServiceName = "ServiceName";
+
+    /// <summary>
+    /// Nome do serviço a ser mostrado para o usuário (vem do nome do produto no assembler da aplicação)
+    /// </summary>
+    public const string ServiceDisplayName = "ServiceDisplayName";
+
+    /// <summary>
+    /// Descrição do serviço (vem da descrição no assembler da aplicação)
+    /// </summary>
+    public const string ServiceDescription = "ServiceDescription";
+
+    /// <summary>
+    /// Lista de prefixos a serem ouvidos, separada por ';'
+    /// </summary>
+    public const string URLs = "urls";
+
+    /// <summary>
+    /// Prefixo a ser ignorado no início da url. (proxypass, fastcgi, etc..) usado para ignorar início do path na url no pré-processamento de /version e /update
+    /// </summary>
+    public const string IgnorePrefix = "IgnorePrefix";
+
+    /// <summary>
+    /// Devolve se foi executado com o wrapper de linha de comando "dotnet" (linux, normalmente)
+    /// </summary>
+    public const string IsDotnetCmd = "IsDotnetCmd";
+
+
+}
+
