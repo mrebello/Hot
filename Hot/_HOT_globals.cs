@@ -4,7 +4,6 @@ global using System.Collections.Concurrent;
 global using System.Collections.Generic;
 global using System.Configuration;
 global using System.Data;
-global using System.Data.SqlClient;
 global using System.Diagnostics;
 global using System.IO;
 global using System.Linq;
@@ -23,6 +22,7 @@ global using System.Threading.Tasks;
 global using System.Threading;
 global using System.Xml;
 
+global using Microsoft.Data.SqlClient;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.DependencyInjection.Extensions;
