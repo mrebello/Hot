@@ -157,6 +157,7 @@ public static class Functions {
         return Encoding.UTF8.GetString(crypt.DecryptCfb(bytes, IV));
     }
 
+
     /// <summary>
     /// Compara duas strings alinhadas à direita, retirando espaços e 'enter', preenchendo com '0' para que fiquem do mesmo tamanho
     /// </summary>
