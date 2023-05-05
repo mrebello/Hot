@@ -3,11 +3,9 @@
 Biblioteca complementar à <a href="https://github.com/mrebello/HotLIB">HotLIB</a> para a criação de WebAPIs ou aplicações WEB.
 
 
-
-
 Rotinas básicas para aplicações, baseada em .NET 6, para serviços, envolvendo:
 
-##Config
+## Config
 
 Usa **System.Configuration.ConfigurationManager**.
 

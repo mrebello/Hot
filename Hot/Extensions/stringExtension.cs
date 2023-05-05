@@ -275,10 +275,27 @@ public static class stringExtension {
 
 
     /// <summary>
-    /// Return string with all '%(xxxxx)%' replaced with Conf["xxxxx"]
+    /// Return string with all '%(xxxxx)%' replaced with Conf["xxxxx"], and %env% replaced with enviroment var env
     /// </summary>
-    /// <param name="s"></param>
+    /// <param name="s">string a expandir</param>
+    /// <param name="configuration">Configuração a usar. Se nulo, usa Conf[].</param>
     /// <returns></returns>
+    public static string ExpandConfig(this string s, IConfiguration configuration) {
+        while (s.Contains("%(")) {    // se contém campo de configuração, faz a troca
+            (string antes, string depois) = s.SplitIn2("%(");
+            (string nome, depois) = depois.SplitIn2(")%");
+            configuration ??= HotConfiguration.config.Config;
+            s = antes + configuration[nome] + depois;
+        }
+        s = Environment.ExpandEnvironmentVariables(s);
+        return s;
+    }
+    
+    /// <summary>
+     /// Return string with all '%(xxxxx)%' replaced with Conf["xxxxx"], and %env% replaced with enviroment var env
+     /// </summary>
+     /// <param name="s"></param>
+     /// <returns></returns>
     public static string ExpandConfig(this string s) {
         if (s == null)
             return "";
@@ -287,6 +304,7 @@ public static class stringExtension {
             (string nome, depois) = depois.SplitIn2(")%");
             s = antes + Config[nome] + depois;
         }
+        s = Environment.ExpandEnvironmentVariables(s);
         return s;
     }
 

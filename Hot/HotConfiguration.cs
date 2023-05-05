@@ -1,4 +1,6 @@
-﻿namespace Hot;
+﻿using Microsoft.Extensions.Hosting;
+
+namespace Hot;
 
 /// <summary>
 /// Define um IConfiguration global, lendo as seguintes configurações:
@@ -152,7 +154,7 @@ public class HotConfiguration : IConfiguration {
         get {
             LogHC?.LogTrace(() => Log.Msg("get Config[\"" + key + "\"] = " + _configuration[key]));
             return _configuration[key];
-        } 
+        }
         set {
             LogHC?.LogTrace(() => Log.Msg("set Config[\"" + key + "\"] = " + value));
             onlineProvider.Set(key, value); // _configuration[key] = value;
@@ -239,15 +241,39 @@ public class HotConfiguration : IConfiguration {
                 configSearchPath += "- environment variables started with ASPNETCORE_" + Environment.NewLine;
                 confBuilder.AddEnvironmentVariables(prefix: "ASPNETCORE_");
 
-                void add_file(string f) {
-                    configSearchPath += "- " + f + Environment.NewLine;
-                    confBuilder.AddJsonFile(f, true, true);
-                }
+                #region Processa "Include" na configuração  ***** Implementação não em ordem  - deveria estar no arquivo de configuração
+                {
+                    // var items = c_temp.GetSection("Includes").Get<List<string>>();
+                    var items = new string[] { "/etc/HotLIB.d",
+                            "%ProgramData%\\HotLIB",
+                            $"/etc/{asm_name}.d",
+                            $"%ProgramData%\\{asm_name}",
+                            $"{executable_path}appsettings.json",
+                            $"{executable_path}{executable_name}.conf",
+                            $"{executable_path}appsettings.{env}.json" };
 
-                add_file($"{executable_path}appsettings.json");
-                add_file($"/etc/{asm_name}.conf");
-                add_file($"{executable_path}{executable_name}.conf");
-                add_file($"{executable_path}appsettings.{env}.json");
+                    if (items != null) {
+                        foreach (var item in items) {
+                            //var i = item.ExpandConfig();
+                            var i = Environment.ExpandEnvironmentVariables(item);
+                            configSearchPath += "- " + i + ": ";
+                            if (Directory.Exists(i)) {
+                                configSearchPath += "directory" + Environment.NewLine;
+                                string[] files = Directory.GetFiles(i, "*.conf", SearchOption.AllDirectories);
+                                foreach (var f in files) {
+                                    configSearchPath += "     " + f + Environment.NewLine;
+                                    confBuilder.AddJsonFile(f, true, true);
+                                }
+                            } else if (File.Exists(i)) {
+                                confBuilder.AddJsonFile(i, true, true);
+                                configSearchPath += "included";
+                            } else
+                                configSearchPath += "not exist";
+                            configSearchPath += Environment.NewLine;
+                        }
+                    }
+                }
+                #endregion
 
                 configSearchPath += "- command line parameters" + Environment.NewLine;
                 string[] cmdline = Environment.GetCommandLineArgs();
@@ -272,25 +298,31 @@ public class HotConfiguration : IConfiguration {
 
                 _configuration = confBuilder.Build();
 
+                AddRuntimeValues(_configuration);
+
                 // Após ler configurações, analisa ambiente onde está e coloca valores em configurações 
+                void AddRuntimeValues(IConfiguration c) {
 #if (DEBUG)
-                _configuration[ConfigConstants.Configuration] = "Debug";
+                    c[ConfigConstants.Configuration] = "Debug";
 #elif (RELEASE)
-                _configuration[ConfigConstants.Configuration] = "Release";
+                c[ConfigConstants.Configuration] = "Release";
 #endif
-                _configuration[ConfigConstants.Environment] = env;
-                _configuration[ConfigConstants.IsDevelopment] = (env == Environments.Development).ToStr();
+                    c[ConfigConstants.Environment] = env;
+                    c[ConfigConstants.IsDevelopment] = (env == Environments.Development).ToStr();
 
-                if (_configuration[ConfigConstants.AppName] == null) {
-                    _configuration[ConfigConstants.AppName] = (executable_name ?? asm_name ?? "").TrimEnd(".exe");
+                    if (c[ConfigConstants.AppName] == null) {
+                        c[ConfigConstants.AppName] = (executable_name ?? asm_name ?? "").TrimEnd(".exe");
+                    }
+                    c[ConfigConstants.Version] = asm_resource.GetName().Version?.ToString();
+                    c[ConfigConstants.ExecutableFullName] = executable_fullname;
+                    c[ConfigConstants.ExecutablePath] = executable_path;
+                    c[ConfigConstants.ExecutableName] = executable_name;
+                    c[ConfigConstants.IsDotnetCmd] = IsDotnetCmd.ToStr();
+
+                    c[ConfigConstants.ServiceName] = asm_resource.GetCustomAttribute<AssemblyTitleAttribute>()?.Title ?? "";
+                    c[ConfigConstants.ServiceDisplayName] = asm_resource.GetCustomAttribute<AssemblyProductAttribute>()?.Product ?? "";
+                    c[ConfigConstants.ServiceDescription] = asm_resource.GetCustomAttribute<AssemblyDescriptionAttribute>()?.Description ?? "";
                 }
-                _configuration[ConfigConstants.Version] = asm_resource.GetName().Version?.ToString();
-                _configuration[ConfigConstants.ExecutableFullName] = executable_fullname;
-                _configuration[ConfigConstants.IsDotnetCmd] = IsDotnetCmd.ToStr();
-
-                _configuration[ConfigConstants.ServiceName] = asm_resource.GetCustomAttribute<AssemblyTitleAttribute>()?.Title ?? "";
-                _configuration[ConfigConstants.ServiceDisplayName] = asm_resource.GetCustomAttribute<AssemblyProductAttribute>()?.Product ?? "";
-                _configuration[ConfigConstants.ServiceDescription] = asm_resource.GetCustomAttribute<AssemblyDescriptionAttribute>()?.Description ?? "";
             }
         }
     }
@@ -361,6 +393,16 @@ public static partial class ConfigConstants {
     /// Devolve o nome completo do executável (do assembler) da aplicação
     /// </summary>
     public const string ExecutableFullName = "ExecutableFullName";
+
+    /// <summary>
+    /// Devolve o caminho completo do executável (do assembler) da aplicação
+    /// </summary>
+    public const string ExecutablePath = "ExecutablePath";
+
+    /// <summary>
+    /// Devolve o nome do executável sem caminho e sem extensão
+    /// </summary>
+    public const string ExecutableName = "ExecutableName";
 
     /// <summary>
     /// Configurações relacionadas ao autoupdate
