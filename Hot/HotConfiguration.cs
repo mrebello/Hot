@@ -244,32 +244,45 @@ public class HotConfiguration : IConfiguration {
                 #region Processa "Include" na configuração  ***** Implementação não em ordem  - deveria estar no arquivo de configuração
                 {
                     // var items = c_temp.GetSection("Includes").Get<List<string>>();
-                    var items = new string[] { "/etc/HotLIB.d",
+                    string[] items;
+                    if (OperatingSystem.IsWindows()) {
+                        items = new string[] {
                             "%ProgramData%\\HotLIB",
-                            $"/etc/{asm_name}.d",
                             $"%ProgramData%\\{asm_name}",
                             $"{executable_path}appsettings.json",
-                            $"{executable_path}{executable_name}.conf",
+                            $"{executable_path}{executable_name}*.conf",
                             $"{executable_path}appsettings.{env}.json" };
+                    } else {
+                        items = new string[] { "/etc/HotLIB.d",
+                            $"/etc/{asm_name}.d",
+                            $"{executable_path}appsettings.json",
+                            $"{executable_path}{executable_name}*.conf",
+                            $"{executable_path}appsettings.{env}.json" };
+                    }
 
                     if (items != null) {
                         foreach (var item in items) {
                             //var i = item.ExpandConfig();
                             var i = Environment.ExpandEnvironmentVariables(item);
                             configSearchPath += "- " + i + ": ";
-                            if (Directory.Exists(i)) {
-                                configSearchPath += "directory" + Environment.NewLine;
-                                string[] files = Directory.GetFiles(i, "*.conf", SearchOption.AllDirectories);
+                            if (Directory.Exists(i) || i.Contains('?') || i.Contains('*')) {
+                                string[] files;
+                                if (i.Contains('?') || i.Contains('*')) {
+                                    configSearchPath += "wildcards" + Environment.NewLine;
+                                    files = Directory.GetFiles(Path.GetDirectoryName(i), Path.GetFileName(i));
+                                } else {
+                                    configSearchPath += "directory" + Environment.NewLine;
+                                    files = Directory.GetFiles(i, "*.conf", SearchOption.AllDirectories);
+                                }
                                 foreach (var f in files) {
                                     configSearchPath += "     " + f + Environment.NewLine;
                                     confBuilder.AddJsonFile(f, true, true);
                                 }
                             } else if (File.Exists(i)) {
                                 confBuilder.AddJsonFile(i, true, true);
-                                configSearchPath += "included";
+                                configSearchPath += "included" + Environment.NewLine;
                             } else
-                                configSearchPath += "not exist";
-                            configSearchPath += Environment.NewLine;
+                                configSearchPath += "not exist" + Environment.NewLine;
                         }
                     }
                 }
