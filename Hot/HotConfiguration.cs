@@ -169,12 +169,16 @@ public class HotConfiguration : IConfiguration {
     public HotConfiguration() {
         lock (InicializaLock) {
             if (_configuration == null) {
-                bool IsDotnetCmd = false;
+                string[] cmdline_args = Environment.GetCommandLineArgs();
+                // Primeiro parâmetro é o nome do executável, então, definir como "". Se for "dotnet xxx", zerar os 2 primeiros
+                cmdline_args[0] = "";
+                if (IsDotNET(cmdline_args[0])) cmdline_args[1] = "";
                 //var executable_fullname = System.Environment.GetCommandLineArgs()[0];  // devolve o nome da DLL para aplicativos empacotados em arquivo único
                 var executable_fullname = System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName;
                 if (IsDotNET(executable_fullname) || IsIIS(executable_fullname))
                     executable_fullname = System.Environment.GetCommandLineArgs()[0];
                 var executable_path = Path.GetDirectoryName(System.Environment.GetCommandLineArgs()[0]) + Path.DirectorySeparatorChar;
+                bool IsDotnetCmd = false;
                 if (IsDotNET(executable_fullname)) {  // se chamado explicitamente com "dotnet xxx"
                     IsDotnetCmd = true;
                     executable_fullname = System.Environment.GetCommandLineArgs()[1];
@@ -193,46 +197,56 @@ public class HotConfiguration : IConfiguration {
                     System.Reflection.Assembly.GetExecutingAssembly();
                 asmHot_resource = typeof(HotConfiguration).Assembly;
                 asmHotAPI_resource = AppDomain.CurrentDomain.GetAssemblies().Where((i) => i.FullName?.StartsWith("HotAPI,") ?? false)?.FirstOrDefault();
-
                 var asm_name = asm_resource.GetName().Name;
-                // pega environment sem usar 'host'. Prioridades:
-                // 1 - nome da máquina (se inicia com RS-DS é Development)
-                // 2 - variável de ambiente
-                // 3 - linha de comando
-                string env = Environments.Production;
 
-                //// **** Linha abaixo criada com configuração 'HARDCODDED'. Deve ser excluída.
-                //env = Environment.MachineName.StartsWith("RS-DS") ? Environments.Development : env;
-                //// ****
-
-                // Ambiente definido ou em variáveis de ambiente ou na linha de comando
-                env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? env;
-                var ee = Environment.GetCommandLineArgs().Where((s) => s.ToUpper().TrimStart(new char[] { '-', '/' }).StartsWith("ENVIRONMENT"));
-                if (ee.Count() > 0) {
-                    env = ee.Last().After("=");
+                var appsttings_embeddedHot = asmHot_resource.GetManifestResourceStream("Hot.appsettings.json")
+                    ?? throw new ConfigurationErrorsException("appsettings.json da HotLib não encontrado!");
+                Stream? appsttings_embeddedHotAPI = null;
+                if (asmHotAPI_resource is not null) {
+                    appsttings_embeddedHotAPI = asmHotAPI_resource.GetManifestResourceStream("HotAPI.appsettings.json")
+                        ?? throw new ConfigurationErrorsException("appsettings.json da HotAPI não encontrado!");
                 }
+                var appsttings_embedded = asm_resource.GetAsmStream("appsettings.json")
+                    ?? throw new ConfigurationErrorsException("appsettings.json deve ser recurso inserido.");
+
+
+                #region Processamento da Pré-configuração (appsettings embutidos, variáveis de ambiente e linha de comando apenas)
+
+                var preconfBuilder = new ConfigurationBuilder();
+                preconfBuilder.SetBasePath(Directory.GetCurrentDirectory());
+                preconfBuilder.AddJsonStream(asmHot_resource.GetManifestResourceStream("Hot.appsettings.json")!);  // outro stream para não dar conflito
+                if (asmHotAPI_resource is not null) preconfBuilder.AddJsonStream(asmHotAPI_resource.GetManifestResourceStream("HotAPI.appsettings.json")!);
+                preconfBuilder.AddJsonStream(asm_resource.GetAsmStream("appsettings.json")!);
+                preconfBuilder.AddEnvironmentVariables(prefix: "DOTNET_");
+                preconfBuilder.AddEnvironmentVariables(prefix: "ASPNETCORE_");
+                preconfBuilder.AddCommandLine(cmdline_args);
+                var preconf = preconfBuilder.Build();
+
+                // Ambiente definido na pré-configuração
+                string env = preconf["Environment"] ?? Environments.Production;
+
+                preconf[ConfigConstants.Environment] = env;
+                preconf[ConfigConstants.IsDevelopment] = (env == Environments.Development).ToStr();
+                preconf[ConfigConstants.AppName] ??= (executable_name ?? asm_name ?? "").TrimEnd(".exe");
+                preconf[ConfigConstants.Version] = asm_resource.GetName().Version?.ToString();
+                preconf[ConfigConstants.ExecutableFullName] = executable_fullname;
+                preconf[ConfigConstants.ExecutablePath] = executable_path;
+                preconf[ConfigConstants.ExecutableName] = executable_name;
+                preconf[ConfigConstants.IsDotnetCmd] = IsDotnetCmd.ToStr();
+
+                // Includes definido na pré-configuração
+                var includeItems = preconf.GetSection("Includes").Get<List<string>>();
+
+                #endregion
+
 
                 var confBuilder = new ConfigurationBuilder();
                 confBuilder.SetBasePath(Directory.GetCurrentDirectory());
 
-                // Le appsettings da HotLib (que possui os valores defaults)
-                var appsttings_embeddedHot = asmHot_resource.GetManifestResourceStream("Hot.appsettings.json");
-                if (appsttings_embeddedHot == null)
-                    throw new ConfigurationErrorsException("appsettings.json da HotLib não encontrado!");
-                confBuilder.AddJsonStream(appsttings_embeddedHot);
-
-                // Le appsettings da HotAPI, se disponíveis (que possui os valores defaults)
-                if (asmHotAPI_resource is not null) {
-                    var appsttings_embeddedHotAPI = asmHotAPI_resource.GetManifestResourceStream("HotAPI.appsettings.json");
-                    if (appsttings_embeddedHotAPI == null)
-                        throw new ConfigurationErrorsException("appsettings.json da HotAPI não encontrado!");
-                    confBuilder.AddJsonStream(appsttings_embeddedHotAPI);
-                }
+                confBuilder.AddJsonStream(appsttings_embeddedHot); // Le appsettings da HotLib (que possui os valores defaults)
+                if (asmHotAPI_resource is not null) confBuilder.AddJsonStream(appsttings_embeddedHotAPI!); // Le appsettings da HotAPI, se disponíveis (que possui os valores defaults)
 
                 configSearchPath += "- default values embedded in executable" + Environment.NewLine;
-                var appsttings_embedded = asm_resource.GetAsmStream("appsettings.json");
-                if (appsttings_embedded == null)
-                    throw new ConfigurationErrorsException("appsettings.json deve ser recurso inserido.");
                 confBuilder.AddJsonStream(appsttings_embedded);
 
                 configSearchPath += "- environment variables started with DOTNET_" + Environment.NewLine;
@@ -243,33 +257,16 @@ public class HotConfiguration : IConfiguration {
 
                 #region Processa "Include" na configuração  ***** Implementação não em ordem  - deveria estar no arquivo de configuração
                 {
-                    // var items = c_temp.GetSection("Includes").Get<List<string>>();
-                    string[] items;
-                    if (OperatingSystem.IsWindows()) {
-                        items = new string[] {
-                            "%ProgramData%\\HotLIB",
-                            $"%ProgramData%\\{asm_name}",
-                            $"{executable_path}appsettings.json",
-                            $"{executable_path}{executable_name}*.conf",
-                            $"{executable_path}appsettings.{env}.json" };
-                    } else {
-                        items = new string[] { "/etc/HotLIB.d",
-                            $"/etc/{asm_name}.d",
-                            $"{executable_path}appsettings.json",
-                            $"{executable_path}{executable_name}*.conf",
-                            $"{executable_path}appsettings.{env}.json" };
-                    }
-
-                    if (items != null) {
-                        foreach (var item in items) {
-                            //var i = item.ExpandConfig();
-                            var i = Environment.ExpandEnvironmentVariables(item);
+                    if (includeItems != null) {
+                        foreach (var item in includeItems) {
+                            var i = item.ExpandConfig(preconf);
+                            //var i = Environment.ExpandEnvironmentVariables(item);
                             configSearchPath += "- " + i + ": ";
                             if (Directory.Exists(i) || i.Contains('?') || i.Contains('*')) {
                                 string[] files;
                                 if (i.Contains('?') || i.Contains('*')) {
                                     configSearchPath += "wildcards" + Environment.NewLine;
-                                    files = Directory.GetFiles(Path.GetDirectoryName(i), Path.GetFileName(i));
+                                    files = Directory.GetFiles(Path.GetDirectoryName(i)!, Path.GetFileName(i));
                                 } else {
                                     configSearchPath += "directory" + Environment.NewLine;
                                     files = Directory.GetFiles(i, "*.conf", SearchOption.AllDirectories);
@@ -289,18 +286,9 @@ public class HotConfiguration : IConfiguration {
                 #endregion
 
                 configSearchPath += "- command line parameters" + Environment.NewLine;
-                string[] cmdline = Environment.GetCommandLineArgs();
-                // Primeiro parâmetro é o nome do executável, então, definir como "". Se for "dotnet xxx", zerar os 2 primeiros
-                if (IsDotNET(cmdline[0])) {
-                    cmdline[0] = "";
-                    cmdline[1] = "";
-                } else {
-                    cmdline[0] = "";
-                }
-                confBuilder.AddCommandLine(cmdline);
-
+                confBuilder.AddCommandLine(cmdline_args);
                 if (env == Environments.Development) {
-                    configSearchPath += "AddSecrets adicionado.";
+                    configSearchPath += "- UserSecrets (Development)" + Environment.NewLine; ;
                     confBuilder.AddUserSecrets(asm_resource, true);
                 }
 
@@ -311,31 +299,23 @@ public class HotConfiguration : IConfiguration {
 
                 _configuration = confBuilder.Build();
 
-                AddRuntimeValues(_configuration);
-
-                // Após ler configurações, analisa ambiente onde está e coloca valores em configurações 
-                void AddRuntimeValues(IConfiguration c) {
 #if (DEBUG)
-                    c[ConfigConstants.Configuration] = "Debug";
+                _configuration[ConfigConstants.Configuration] = "Debug";
 #elif (RELEASE)
-                c[ConfigConstants.Configuration] = "Release";
+                _configuration[ConfigConstants.Configuration] = "Release";
 #endif
-                    c[ConfigConstants.Environment] = env;
-                    c[ConfigConstants.IsDevelopment] = (env == Environments.Development).ToStr();
+                _configuration[ConfigConstants.Environment] = preconf[ConfigConstants.Environment];
+                _configuration[ConfigConstants.IsDevelopment] = preconf[ConfigConstants.IsDevelopment];
+                _configuration[ConfigConstants.AppName] = preconf[ConfigConstants.AppName];
+                _configuration[ConfigConstants.Version] = preconf[ConfigConstants.Version];
+                _configuration[ConfigConstants.ExecutableFullName] = preconf[ConfigConstants.ExecutableFullName];
+                _configuration[ConfigConstants.ExecutablePath] = preconf[ConfigConstants.ExecutablePath];
+                _configuration[ConfigConstants.ExecutableName] = preconf[ConfigConstants.ExecutableName];
+                _configuration[ConfigConstants.IsDotnetCmd] = preconf[ConfigConstants.IsDotnetCmd];
 
-                    if (c[ConfigConstants.AppName] == null) {
-                        c[ConfigConstants.AppName] = (executable_name ?? asm_name ?? "").TrimEnd(".exe");
-                    }
-                    c[ConfigConstants.Version] = asm_resource.GetName().Version?.ToString();
-                    c[ConfigConstants.ExecutableFullName] = executable_fullname;
-                    c[ConfigConstants.ExecutablePath] = executable_path;
-                    c[ConfigConstants.ExecutableName] = executable_name;
-                    c[ConfigConstants.IsDotnetCmd] = IsDotnetCmd.ToStr();
-
-                    c[ConfigConstants.ServiceName] = asm_resource.GetCustomAttribute<AssemblyTitleAttribute>()?.Title ?? "";
-                    c[ConfigConstants.ServiceDisplayName] = asm_resource.GetCustomAttribute<AssemblyProductAttribute>()?.Product ?? "";
-                    c[ConfigConstants.ServiceDescription] = asm_resource.GetCustomAttribute<AssemblyDescriptionAttribute>()?.Description ?? "";
-                }
+                _configuration[ConfigConstants.ServiceName] = asm_resource.GetCustomAttribute<AssemblyTitleAttribute>()?.Title ?? "";
+                _configuration[ConfigConstants.ServiceDisplayName] = asm_resource.GetCustomAttribute<AssemblyProductAttribute>()?.Product ?? "";
+                _configuration[ConfigConstants.ServiceDescription] = asm_resource.GetCustomAttribute<AssemblyDescriptionAttribute>()?.Description ?? "";
             }
         }
     }
