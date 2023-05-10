@@ -7,11 +7,11 @@ public class HotSmtpClient : SmtpClient {
     }
 
     public void LeConf() {
-        string server = Config["Smtp:Host"];
+        string server = Config["Smtp:Host"]!;    // default em appsettings.json
         if (String.IsNullOrWhiteSpace(server)) throw new ConfigurationErrorsException("'Smtp' deve estar configurado em appsettings.json.");
         Host = server;
 
-        int port = Config["Smtp:Port"].ToInt();
+        int port = Config["Smtp:Port"]!.ToInt();    // default em appsettings.json
         if (port > 0) Port = port;
 
         string? user = Config["Smtp:Username"];
@@ -40,7 +40,7 @@ public class HotSmtpClient : SmtpClient {
     }
 
     public void SendHTML(string html, string recipients, string? subject, string? from = null) {
-        string f = from ?? Config["Smtp:From"];
+        string f = from ?? Config["Smtp:From"]!;     // default em appsettings.json
         SendHTML(html, new MailMessage(f, recipients, subject, null));
     }
 }

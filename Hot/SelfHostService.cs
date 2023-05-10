@@ -62,10 +62,10 @@ public abstract class SelfHostedService : IHostedService {
                 // faz a instalação como serviço
                 execute = false;
 
-                string service_name = Config[ConfigConstants.ServiceName];
-                string display_name = Config[ConfigConstants.ServiceDisplayName];
-                string descripton = Config[ConfigConstants.ServiceDescription];
-                string executable = Config[ConfigConstants.ExecutableFullName];
+                string service_name = Config[ConfigConstants.ServiceName]!;
+                string display_name = Config[ConfigConstants.ServiceDisplayName]!;
+                string descripton = Config[ConfigConstants.ServiceDescription]!;
+                string executable = Config[ConfigConstants.ExecutableFullName]!;
 
                 Console.WriteLine($"Install service_name: {service_name}");
 
@@ -108,10 +108,10 @@ public abstract class SelfHostedService : IHostedService {
                 #region Uninstall // faz a desinstalação como serviço
                 execute = false;
 
-                string service_name = Config[ConfigConstants.ServiceName];
-                string display_name = Config[ConfigConstants.ServiceDisplayName];
-                string descripton = Config[ConfigConstants.ServiceDescription];
-                string executable = Config[ConfigConstants.ExecutableFullName];
+                string service_name = Config[ConfigConstants.ServiceName]!;
+                string display_name = Config[ConfigConstants.ServiceDisplayName]!;
+                string descripton = Config[ConfigConstants.ServiceDescription]!;
+                string executable = Config[ConfigConstants.ExecutableFullName]!;
 
                 Console.WriteLine($"Uninstall service_name: {service_name}");
 

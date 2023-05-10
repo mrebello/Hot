@@ -18,7 +18,7 @@ public class BD_simples : IDisposable {
     public BD_simples(string? config_name = null, bool isSqlserver = true) {
         string name = config_name ?? "";
         if (name.Length == 0) name = "DefaultConnection";
-        string connectionString = Config.GetConnectionString(name).Trim();
+        string connectionString = Config.GetConnectionString(name)?.Trim() ?? "";
         if (String.IsNullOrEmpty(connectionString)) {
             throw new ConfigurationErrorsException($"ConnectionStrings '{name}' deve estar configurado em appsettings.json.");
         }

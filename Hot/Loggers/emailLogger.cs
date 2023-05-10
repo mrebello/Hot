@@ -24,7 +24,7 @@ public sealed class emailLogger : ILogger {
         _getCurrentConfig = getCurrentConfig;
     }
 
-    public IDisposable BeginScope<TState>(TState state) => default!;
+    public IDisposable BeginScope<TState>(TState state) where TState : notnull => default!;
 
     public bool IsEnabled(LogLevel logLevel) => logLevel >= _getCurrentConfig().Level;
 
@@ -81,7 +81,7 @@ State: {state?.ToString()}";
 [UnsupportedOSPlatform("browser")]
 [ProviderAlias("email")]
 public class emailLoggerProvider : ILoggerProvider {
-    private readonly IDisposable _onChangeToken;
+    private readonly IDisposable? _onChangeToken;
     private emailLoggerConfiguration _currentConfig;
     private readonly ConcurrentDictionary<string, emailLogger> _loggers = new(StringComparer.OrdinalIgnoreCase);
 

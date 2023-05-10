@@ -34,9 +34,9 @@ exemplos de uso:
 
 - com categoria
 
-        ILogger L = Log.Create("Hot.HttpServer");
+        ILogger Log = LogCreate("Hot.HttpServer");
 		...
-        L.LogInformation("~HttpServer: Fechando listener");
+        Log.LogInformation("~HttpServer: Fechando listener");
 
 - com lambda
 
@@ -96,3 +96,4 @@ Classe para acesso a direto a banco de dados (*database first*, sem uso de ORM, 
 uso na aplicação: (não é necessário nenhuma declaração antes do uso)
 
     BD.SQLCmd("UPDATE CRM_email_Enviado SET Data_leitura=getdate() WHERE Cod_CRM_email_Enviado=@1 AND Data_Leitura IS NULL", Cod_CRM_email_Enviado);
+

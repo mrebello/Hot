@@ -297,8 +297,10 @@ public static class stringExtension {
      /// <param name="s"></param>
      /// <returns></returns>
     public static string ExpandConfig(this string s) {
+#pragma warning disable CS8603 // Possível retorno de referência nula.
         if (s == null)
-            return "";
+            return null;
+#pragma warning restore CS8603 // Possível retorno de referência nula.
         while (s.Contains("%("))   {    // se contém campo de configuração, faz a troca
             (string antes, string depois) = s.SplitIn2("%(");
             (string nome, depois) = depois.SplitIn2(")%");

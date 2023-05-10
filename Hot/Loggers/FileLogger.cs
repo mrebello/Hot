@@ -23,7 +23,7 @@ public sealed class FileLogger : ILogger {
         _getCurrentConfig = getCurrentConfig;
     }
 
-    public IDisposable BeginScope<TState>(TState state) => default!;
+    public IDisposable BeginScope<TState>(TState state) where TState : notnull => default!;
 
     public bool IsEnabled(LogLevel logLevel) => logLevel >= _getCurrentConfig().Level;
 
@@ -56,7 +56,7 @@ State: {state?.ToString()}";
 [UnsupportedOSPlatform("browser")]
 [ProviderAlias("file")]
 public class FileLoggerProvider : ILoggerProvider {
-    private readonly IDisposable _onChangeToken;
+    private readonly IDisposable? _onChangeToken;
     private FileLoggerConfiguration _currentConfig;
     private readonly ConcurrentDictionary<string, FileLogger> _loggers = new(StringComparer.OrdinalIgnoreCase);
 

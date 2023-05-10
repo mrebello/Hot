@@ -14,10 +14,10 @@ abstract public class HttpServer : SelfHostedService {
 
     string[] prefixes = Prefixes_from_config();   // reloaded in Config_Changed
     HttpListener? listener = null;
-    ILogger L = Log.Create("Hot.HttpServer");
+    ILogger Log = LogCreate("Hot.HttpServer");
 
     ~HttpServer() {
-        L.LogInformation("~HttpServer: Fechando listener");
+        Log.LogInformation("~HttpServer: Fechando listener");
         listener?.Close();
     }
 
@@ -62,9 +62,9 @@ abstract public class HttpServer : SelfHostedService {
         ((IConfiguration)Config).GetReloadToken().RegisterChangeCallback(Config_Changed, default);
     }
 
-    static string[] Prefixes_from_config() => Config[ConfigConstants.URLs].Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    static string[] Prefixes_from_config() => Config[ConfigConstants.URLs]!.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);  // default in appsettings.json
     static string IgnorePrefix_from_config() => Config[ConfigConstants.IgnorePrefix] ?? "";
-    async void Config_Changed(object state) {
+    async void Config_Changed(object? state) {
         var new_Prefixes = Prefixes_from_config();
         if (!prefixes.SequenceEqual(new_Prefixes)) {
             Log.LogWarning("Configuração de Prefixes foi alterada. Reiniciando Listener.");
@@ -84,16 +84,16 @@ abstract public class HttpServer : SelfHostedService {
 
 
     public override Task StartAsync(CancellationToken cancellationToken) {
-        L.LogDebug("Chamando Initialize()");
+        Log.LogDebug("Chamando Initialize()");
         Initialize();
 
-        L.LogDebug("Inicializando listener");
+        Log.LogDebug("Inicializando listener");
         listener = new HttpListener();
         foreach (var s in prefixes) {
             listener.Prefixes.Add(s);
-            L.LogInformation($"Prefixo de escuta adicionado: {s}");
+            Log.LogInformation($"Prefixo de escuta adicionado: {s}");
         }
-        L.LogDebug("Iniciando escuta");
+        Log.LogDebug("Iniciando escuta");
         try {
             listener.Start();
         } catch (HttpListenerException ex) {
@@ -103,9 +103,9 @@ abstract public class HttpServer : SelfHostedService {
                     foreach (var s in prefixes) {
                         msg += $"netsh http add urlacl url={s} user=xxxxxx" + Environment.NewLine;
                     }
-                    L.LogError(msg);
+                    Log.LogError(msg);
                 } else {
-                    L.LogError("Erro ao iniciar a escuta na porta.");
+                    Log.LogError("Erro ao iniciar a escuta na porta.");
                 }
             }
             throw;
@@ -132,7 +132,7 @@ abstract public class HttpServer : SelfHostedService {
     }
 
     public override Task StopAsync(CancellationToken cancellationToken) {
-        L.LogDebug("Fechando listener");
+        Log.LogDebug("Fechando listener");
         listener?.Close();
 
         return Task.CompletedTask;

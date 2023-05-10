@@ -6,7 +6,7 @@ public static class AutoUpdate {
     public static bool Authorized(HttpListenerContext context) {
         bool r = false;
         string IPOrigem = context.Request.IP_Origem();
-        string acceptFrom = Config[ConfigConstants.Update.AcceptFrom];
+        string acceptFrom = Config[ConfigConstants.Update.AcceptFrom]!;  // valor default em appsettings.json
         if (acceptFrom.IsEmpty()) {
             Log.LogError($"'Update:AcceptFrom' deve estar configurado em appsettings.json para infos. Tentativa do IP: {IPOrigem}");
             context.Response.SendError("Falha na configuração.", HttpStatusCode.InternalServerError);
@@ -43,7 +43,7 @@ public static class AutoUpdate {
         if (OperatingSystem.IsWindows()) {
             string path = Path.GetDirectoryName(tmpfile) ?? "";
             string batfile = path + Path.DirectorySeparatorChar + Path.GetRandomFileName() + ".bat";
-            string executablename = Path.GetFileName(Config[ConfigConstants.ExecutableFullName]);
+            string executablename = Path.GetFileName(Config[ConfigConstants.ExecutableFullName]!);
 
             if (WindowsServiceHelpers.IsWindowsService()) {   // Rodando como serviço do windows
                 #region Atualiza Windows Service
@@ -100,12 +100,12 @@ public static class AutoUpdate {
                 #region Atualiza Linux Service
                 Log.LogInformation($"Atualizando serviço linux.");
 
-                string service_name = Config[ConfigConstants.ServiceName];
+                string service_name = Config[ConfigConstants.ServiceName]!;
 
                 string path = Path.GetDirectoryName(tmpfile) ?? "";
                 string bashfile = path + Path.DirectorySeparatorChar + Path.GetRandomFileName();
                 string bashfile2 = path + Path.DirectorySeparatorChar + Path.GetRandomFileName();
-                string executablename = Path.GetFileName(Config[ConfigConstants.ExecutableFullName]);
+                string executablename = Path.GetFileName(Config[ConfigConstants.ExecutableFullName]!);
 
                 string bat = "#!/bin/bash\n";
                 bat += $"cd \"{path}\"\n";
@@ -129,7 +129,7 @@ public static class AutoUpdate {
 
                 string path = Path.GetDirectoryName(tmpfile) ?? "";
                 string bashfile = path + Path.DirectorySeparatorChar + Path.GetRandomFileName();
-                string executablename = Path.GetFileName(Config[ConfigConstants.ExecutableFullName]);
+                string executablename = Path.GetFileName(Config[ConfigConstants.ExecutableFullName]!);
                 string servicename = Config.GetAsmResource.GetCustomAttribute<AssemblyTitleAttribute>()?.Title ?? "";
 
                 string bat = "#!/bin/sh\n";
@@ -164,7 +164,7 @@ public static class AutoUpdate {
     /// </summary>
     /// <param name="context"></param>
     public static void ReceiveFile(HttpListenerContext context) {
-        string configsecret = Config[ConfigConstants.Update.Secret];
+        string configsecret = Config[ConfigConstants.Update.Secret]!;   // default em appsettings.json
         string secret = context.Request.Headers["UpdateSecret"] ?? "";
 
         if (configsecret != secret) {
@@ -196,7 +196,7 @@ public static class AutoUpdate {
 
 
     private static string updateurl_base() {
-        string url = Config[ConfigConstants.Update.URL];
+        string url = Config[ConfigConstants.Update.URL]!;   // default em appsettings.json
         return url + (HotConfiguration.asmHotAPI_resource == null ? "" : "HotAPI/");
     }
 
@@ -225,12 +225,12 @@ public static class AutoUpdate {
 
             Log.LogInformation($"Detectado sistema '{app_destination}' versão {version_destination}.");
 
-            string app_me = Config[ConfigConstants.AppName];
+            string app_me = Config[ConfigConstants.AppName]!;
             if (app_me != app_destination) {
                 throw new Exception($"App destino ({app_destination} diferente de app origem {app_me}. Não atualizado.");
             }
 
-            string version_me = Config[ConfigConstants.Version];
+            string version_me = Config[ConfigConstants.Version]!;
 
             var c = Compare_Versions(version_me, version_destination);
             if (c <= 0) {
@@ -240,7 +240,7 @@ public static class AutoUpdate {
 
             Log.LogInformation($"Iniciando atualização da versão {version_destination} para a {version_me}.");
 
-            var executable = File.OpenRead(Config[ConfigConstants.ExecutableFullName]);
+            var executable = File.OpenRead(Config[ConfigConstants.ExecutableFullName]!);
 
 #warning -- Implementar tipo de executável
             // if (executable.Length < 4_500_000) throw new Exception("Arquivo não parece ser pacote publicado. Abortando.");

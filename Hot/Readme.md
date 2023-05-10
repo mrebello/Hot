@@ -4,6 +4,26 @@ Biblioteca complementar à <a href="https://github.com/mrebello/HotLIB">HotLIB</
 
 
 Rotinas básicas para aplicações, baseada em .NET 6, para serviços, envolvendo:
+- Config
+- Log
+- BD (acesso direto sem ORM)
+- SelfHostedService
+- HTTP selfhosted (kestrel)
+
+E ajustes no .xml do projeto para ter versionamento automático (editar a mão)
+
+	<PropertyGroup>
+		<Title>Título da aplicação</Title>
+		<Description>Descrição do serviço da aplicação - é a que será usada em services com o serviço instalado.</Description>
+
+		<VersionBase>1.0</VersionBase>
+		<VersionSuffix>-beta</VersionSuffix>
+		<AssemblyVersion>$(VersionBase).$([System.DateTime]::Now.Subtract("2000-01-01").Days).$([System.DateTime]::Now.TimeOfDay.TotalMinutes.ToString("0"))</AssemblyVersion>
+		<FileVersion>$(AssemblyVersion)</FileVersion>
+		<VersionPrefix>$(AssemblyVersion)</VersionPrefix>
+		<Version>$(VersionPrefix)$(VersionSuffix)</Version>
+
+A linha do <AssemblyVersion> coloca como versão do assembly a <VersionBase> + '.' + (número de dias a partir da data base (2000-01-01)) + '.' + (número de minutos do dia), gerando um número de versão próximo ao "1.0.*", porém permitindo que esse número seja usado nos pacotes e mantendo a compilação determinística.
 
 ## Config
 
@@ -65,6 +85,14 @@ Classe para acesso a banco de dados (sqlserver, usando **System.Data.SqlClient**
 - Comandos SQL com parâmetros de forma simples
 - Log dos comandos (nível de log nas configurações)
 
+appsettings.json para vários bancos:
+
+    "ConnectionStrings": {
+       "DefaultConnection": "Server=localhost;Trusted_Connection=True",
+       "BDweb": "Server=bd2;Database=bd2;user=sa;password=%(BD2:passwd_bdweb)%", // expande para senha em configurações (user-secrets, por exemplo)
+    },
+
+
 declaração para uso com diversos bancos na aplicação:
 
     global using static nnnn.BD.SQL;
@@ -73,8 +101,8 @@ declaração para uso com diversos bancos na aplicação:
         public class BDs : BD_simples {
             public BDs() : base(null) {
             }
-            public BD_simples WEB = new BD_simples("WEB");
-            public BD_simples ASPPREV = new BD_simples("ASPPREV");
+            public BD_simples BDweb = new BD_simples("BDweb");
+            public BD_simples BD2 = new BD_simples("BD2");
         }
 
         public static class SQL {
@@ -84,7 +112,7 @@ declaração para uso com diversos bancos na aplicação:
 
 uso na aplicação: (não é necessário nenhuma declaração antes do uso)
 
-    BD.WEB.SQLCmd("UPDATE CRM_email_Enviado SET Data_leitura=getdate() WHERE Cod_CRM_email_Enviado=@1 AND Data_Leitura IS NULL", Cod_CRM_email_Enviado);
+    BD.BDweb.SQLCmd("UPDATE CRM_email_Enviado SET Data_leitura=getdate() WHERE Cod_CRM_email_Enviado=@1 AND Data_Leitura IS NULL", Cod_CRM_email_Enviado);
 
 
 ## SelfHostedService

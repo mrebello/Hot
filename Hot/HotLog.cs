@@ -55,14 +55,16 @@ public class HotLog : ILogger {
         return _loggerFactory.CreateLogger(nome);
     }
 
-    IDisposable ILogger.BeginScope<TState>(TState state) => _logger.BeginScope<TState>(state);
+    IDisposable? ILogger.BeginScope<TState>(TState state) => _logger.BeginScope<TState>(state);
     bool ILogger.IsEnabled(LogLevel logLevel) => _logger.IsEnabled(logLevel);
     void ILogger.Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
         _logger.Log<TState>(logLevel, eventId, state, exception, formatter);
 
     static public void LoggingCreate(ILoggingBuilder logging) {
         logging.AddConsole();
-        logging.AddFilter<EventLogLoggerProvider>((LogLevel level) => level >= LogLevel.Warning);
+        if (OperatingSystem.IsWindows()) {
+            logging.AddFilter<EventLogLoggerProvider>((LogLevel level) => level >= LogLevel.Warning);
+        }
         logging.AddConfiguration(HotConfiguration.configuration.GetSection("Logging"));
         logging.AddConsole();
         logging.AddDebug();

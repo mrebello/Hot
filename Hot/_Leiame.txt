@@ -4,11 +4,14 @@ Ajustes do arquivo do projeto:
 	<PropertyGroup>
 		<Title>Título da aplicação</Title>
 		<Description>Descrição do serviço da aplicação - é a que será usada em services com o serviço instalado.</Description>
-		<AssemblyVersion>1.0.*</AssemblyVersion>
-		<Deterministic>false</Deterministic>
-		<Version>$(VersionPrefix)</Version>
+
+		<VersionBase>1.0</VersionBase>
+		<VersionSuffix>-beta</VersionSuffix>
+		<AssemblyVersion>$(VersionBase).$([System.DateTime]::Now.Subtract("2000-01-01").Days).$([System.DateTime]::Now.TimeOfDay.TotalMinutes.ToString("0"))</AssemblyVersion>
 		<FileVersion>$(AssemblyVersion)</FileVersion>
-	  <UserSecretsId>Nome do user-secrets da aplicação</UserSecretsId>
+		<VersionPrefix>$(AssemblyVersion)</VersionPrefix>
+		<Version>$(VersionPrefix)$(VersionSuffix)</Version>
+
   </PropertyGroup>
 
 	<ItemGroup>
@@ -16,15 +19,7 @@ Ajustes do arquivo do projeto:
 	</ItemGroup>
 
 	<ItemGroup>
-		<Compile Include="..\..\Hot\Hot\_HOT_globals.cs" Link="_HOT_globals.cs" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<EmbeddedResource Include="appsettings.json" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\..\Hot\Hot\Hot.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -42,14 +37,21 @@ Help_Parameters.txt -> incorporado na DLL (texto padrão).
 appsettings.json:
 -----------------
 appsettings.json na biblioteca Hot:
-  -> é apenas exemplo do appsettings a ser usado na aplicação
+  -> contém valores incorporados 'default's
 
 appsettings.json da aplicação:
   -> incorporado na aplicação.
 
+
 _HOT_globals.cs:
 ----------------
-adicionar o arquivo "vinculado" ao projeto da aplicação, para incluir todos os "using" para uso da biblioteca
+global using Hot;
+global using Hot.Extensions;
+
+global using static Hot.Functions;
+global using static Hot.HotConfiguration.config;
+global using static Hot.HotLog.log;
+
 
 BDs para várias bases:
 ----------------------

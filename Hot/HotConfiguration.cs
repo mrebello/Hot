@@ -5,13 +5,11 @@ namespace Hot;
 /// <summary>
 /// Define um IConfiguration global, lendo as seguintes configurações:
 /// - Ambiente de desenvolvimento "Development" definido via variável de ambiente nas propriedades de depuração (DOTNET_ENVIRONMENT=Development)
-///     Se não definido na variável de ambiente, checa nome da máquina (StartsWith("RS-DS") = Development
-///     e checa parâmetros
+///     Se não definido na variável de ambiente, checa parâmetros da linha de comando e appsettings.json incorporado na aplicação
 /// - Arquivo AppSettings.JSON está incorporado no APP para definir as configurações padrões
-/// - Procura configuração também em {exename}.conf e em /etc/{assemblername}.conf antes da linha de comando
-/// - Linha de comando = appupdate.exe /MySetting:SomeValue=123
-/// - Environment = set Logging__LogLevel__Microsoft=Information      (__ ao invés de : na variável de ambiente)
+/// - Procura configuração nos "Include" do appsettings incorporado na aplicação
 /// (no Linux, o provedor de log Debug é distribution-dependent e pode ser: /var/log/message or /var/log/syslog)
+/// EXPANDE os valores de configuração na leitura do valor (com Config e Environment)
 /// </summary>
 public class HotConfiguration : IConfiguration {
     /// <summary>
@@ -150,14 +148,19 @@ public class HotConfiguration : IConfiguration {
     static object InicializaLock = new object();
 
     public static string configSearchPath = "";
-    public string this[string key] {
+    /// <summary>
+    /// Lê/grava valor de configuração. Na leitura, expande valores de configuração %(xxx)% e ambiente %envvar%.
+    /// </summary>
+    /// <param name="key">Nome da chave a ler/gravar o valor</param>
+    /// <returns>Valor da chave lida, expandida.</returns>
+    public string? this[string key] {
         get {
             LogHC?.LogTrace(() => Log.Msg("get Config[\"" + key + "\"] = " + _configuration[key]));
-            return _configuration[key];
+            return _configuration[key]?.ExpandConfig(_configuration);
         }
         set {
             LogHC?.LogTrace(() => Log.Msg("set Config[\"" + key + "\"] = " + value));
-            onlineProvider.Set(key, value); // _configuration[key] = value;
+            onlineProvider.Set(key, value ?? ""); // _configuration[key] = value;
         }
     }
     public void OnReload() => onlineProvider.OnReload();
