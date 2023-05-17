@@ -196,8 +196,8 @@ public class HotConfiguration : IConfiguration {
                 //Assembly asm_executing = System.Reflection.Assembly.GetExecutingAssembly();
                 // Ao invés do acima, pega o frame mais alto do stackFrame atual
                 var stackFrame = new System.Diagnostics.StackTrace(1);
-                asm_resource = stackFrame.GetFrame(stackFrame.FrameCount - 1)?.GetMethod()?.ReflectedType?.Assembly ??
-                    System.Reflection.Assembly.GetExecutingAssembly();
+                asm_resource = stackFrame.GetFrame(stackFrame.FrameCount - 1)?.GetMethod()?.ReflectedType?.Assembly
+                    ?? System.Reflection.Assembly.GetExecutingAssembly();
                 asmHot_resource = typeof(HotConfiguration).Assembly;
                 asmHotAPI_resource = AppDomain.CurrentDomain.GetAssemblies().Where((i) => i.FullName?.StartsWith("HotAPI,") ?? false)?.FirstOrDefault();
                 var asm_name = asm_resource.GetName().Name;
@@ -345,14 +345,12 @@ public class HotConfiguration : IConfiguration {
 
 
     private static bool IsDotNET(string? name) {
-        if (name is null)
-            return false;
+        if (name is null) return false;
         return Path.GetFileName(name).StartsWith("dotnet", StringComparison.InvariantCultureIgnoreCase);
     }
 
     private static bool IsIIS(string? name) {
-        if (name is null)
-            return false;
+        if (name is null) return false;
         var n = Path.GetFileName(name);
         return n.StartsWith("iis.exe", StringComparison.InvariantCultureIgnoreCase) || n.StartsWith("iisexpress.exe", StringComparison.InvariantCultureIgnoreCase);
     }

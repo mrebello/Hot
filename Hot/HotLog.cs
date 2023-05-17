@@ -61,16 +61,12 @@ public class HotLog : ILogger {
         _logger.Log<TState>(logLevel, eventId, state, exception, formatter);
 
     static public void LoggingCreate(ILoggingBuilder logging) {
-        logging.AddConsole();
-        if (OperatingSystem.IsWindows()) {
-            logging.AddFilter<EventLogLoggerProvider>((LogLevel level) => level >= LogLevel.Warning);
-        }
         logging.AddConfiguration(HotConfiguration.configuration.GetSection("Logging"));
         logging.AddConsole();
         logging.AddDebug();
         logging.AddEventSourceLogger();
         if (OperatingSystem.IsWindows()) {
-            logging.AddEventLog(new EventLogSettings() { SourceName = Config["AppName"] });
+            logging.AddEventLog();
         }
         logging.AddFileLogger();
         logging.AddemailLogger();
