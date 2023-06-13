@@ -11,9 +11,9 @@ public abstract class SelfHostedService : IHostedService {
     /// Rotina 'main' padrão para serviços. Chamar com
     ///   MainDefault<xxx>( sub_inicia ); com xxx sendo o nome da classe do programa.
     /// </summary>
-    /// <typeparam name="service"></typeparam>
+    /// <typeparam name="Service"></typeparam>
     /// <param name="analisa_Parametros">Parâmetro opcional com a sub para analizar os parâmetros de linha de comando específicos</param>
-    public static void MainDefault<service>(Analisa_Parametros? analisa_Parametros = null) where service : class, IHostedService {
+    public static void MainDefault<Service>(Analisa_Parametros? analisa_Parametros = null) where Service : class, IHostedService {
         string[] args = Environment.GetCommandLineArgs();
         args[0] = "";  // primeiro elemento é o nome do executável
 
@@ -26,7 +26,7 @@ public abstract class SelfHostedService : IHostedService {
             .ConfigureServices(services => services
                 .AddSingleton<IConfiguration, HotConfiguration>()
                 .AddSingleton<ILogger, HotLog>()
-                .AddHostedService<service>()
+                .AddHostedService<Service>()
              )
             .UseSystemd()
             .UseWindowsService()

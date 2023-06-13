@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<Title>Hot Framework</Title>
@@ -29,26 +29,6 @@ Inclui gerenciamento de configurações, logs (com log para email e arquivos), h
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-		<DebugType>portable</DebugType>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-		<CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-		<DebugType>portable</DebugType>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-		<DebugType>portable</DebugType>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-		<CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-		<DebugType>portable</DebugType>
-	</PropertyGroup>
-
 	<ItemGroup>
 		<None Remove="appsettings.json" />
 		<None Remove="Help_Parameters.txt" />
@@ -72,11 +52,11 @@ Inclui gerenciamento de configurações, logs (com log para email e arquivos), h
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Update="HotLIB.png">
+		<None Include="HotLIB.png">
 			<Pack>True</Pack>
 			<PackagePath>\</PackagePath>
 		</None>
-		<None Update="README.md">
+		<None Include="README.md">
 		  <Pack>True</Pack>
 		  <PackagePath>\</PackagePath>
 		</None>
