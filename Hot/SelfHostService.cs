@@ -2,20 +2,29 @@
 
 public abstract class SelfHostedService : IHostedService {
 
-    public abstract Task StartAsync(CancellationToken cancellationToken);
+    public virtual Task StartAsync(CancellationToken cancellationToken) {
+        ((IConfiguration)Config).GetReloadToken().RegisterChangeCallback(Config_Changed_trap, default);
+
+        return Task.CompletedTask;
+    }
+
     public abstract Task StopAsync(CancellationToken cancellationToken);
 
     public delegate void Analisa_Parametros(string[] args);
 
     /// <summary>
     /// Rotina 'main' padrão para serviços. Chamar com
-    ///   MainDefault<xxx>( sub_inicia ); com xxx sendo o nome da classe do programa.
+    ///   MainService<xxx>( sub_inicia ); com xxx sendo o nome da classe do programa.
     /// </summary>
     /// <typeparam name="Service"></typeparam>
     /// <param name="analisa_Parametros">Parâmetro opcional com a sub para analizar os parâmetros de linha de comando específicos</param>
-    public static void MainDefault<Service>(Analisa_Parametros? analisa_Parametros = null) where Service : class, IHostedService {
+    /// <returns>0 - Rodou normalmente (instalou, desinstalou, ou executou e terminou normalmente)
+    /// 1 - Erro</returns>
+    public static int MainService<Service>(Analisa_Parametros? analisa_Parametros = null) where Service : class, IHostedService {
         string[] args = Environment.GetCommandLineArgs();
         args[0] = "";  // primeiro elemento é o nome do executável
+
+        int exitCode = 0;
 
         var hostBuilder = new HostBuilder();
 
@@ -94,13 +103,16 @@ public abstract class SelfHostedService : IHostedService {
                         }
                         else {
                             Console.Error.WriteLine("Template de serviço não encontrado em HotLib.");
+                            exitCode = 10;
                         }
                     } else {
                         Console.Error.WriteLine("/etc/systemd/system não encontrado. Suporte a apenas inicialização systemd.");
+                        exitCode = 11;
                     }
                 }
                 else {
                     Console.Error.WriteLine("unsupported Operating System.");
+                    exitCode = 12;
                 }
                 #endregion
             }
@@ -122,9 +134,11 @@ public abstract class SelfHostedService : IHostedService {
                 }
                 else if (OperatingSystem.IsLinux()) {
                     Log.LogError("Não Implementado!");
+                    exitCode= 13;
                 }
                 else {
                     Console.Error.WriteLine("unsupported Operating System.");
+                    exitCode = 14;
                 }
                 #endregion
             }
@@ -141,6 +155,7 @@ public abstract class SelfHostedService : IHostedService {
 
         if (new[] { "/d", "/daemon", "-d", "--daemon" }.Any(args.Contains)) {
             daemon = true;
+            Config.IsDaemon = daemon;
         }
 
         try {
@@ -148,6 +163,7 @@ public abstract class SelfHostedService : IHostedService {
             analisa_Parametros?.Invoke(args);
         } catch (Exception e) {
             Log.LogCritical( e, "Erro analisando parâmetros.");
+            exitCode = 15;
         }
 
         try {
@@ -167,8 +183,36 @@ public abstract class SelfHostedService : IHostedService {
             }
         } catch (Exception e) {
             Log.LogCritical(e, "Erro ao executar o hosting.");
+            exitCode = 16;
         }
+        return exitCode;
     }
+
+
+    public virtual void Config_Changed(object? state) {
+        //var new_Prefixes = Prefixes_from_config();
+        //if (!prefixes.SequenceEqual(new_Prefixes)) {
+        //    Log.LogWarning("Configuração de Prefixes foi alterada. Reiniciando Listener.");
+        //    prefixes = new_Prefixes;
+        //    await StopAsync(default);
+        //    await StartAsync(default);
+        //}
+
+        //var new_IgnorePrefix = IgnorePrefix_from_config();
+        //if (new_IgnorePrefix != ignorePrefix) {
+        //    Log.LogWarning("ignorePrefix foi alterado.");
+        //    ignorePrefix = new_IgnorePrefix;
+        //}
+        HotLog.log.Log.LogInformation("RECONFIGURADO");
+    }
+
+#pragma warning disable CS1998 // O método assíncrono não possui operadores 'await' e será executado de forma síncrona
+    async void Config_Changed_trap(object? state) {
+        Config_Changed(state);
+        ((IConfiguration)Config).GetReloadToken().RegisterChangeCallback(Config_Changed_trap, default);
+    }
+#pragma warning restore CS1998 // O método assíncrono não possui operadores 'await' e será executado de forma síncrona
+
 
     public static void RunProcess_SUDO(string filename, string arguments) {
         if (OperatingSystem.IsWindows()) {

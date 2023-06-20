@@ -343,6 +343,10 @@ public class HotConfiguration : IConfiguration {
         public new void OnReload() => OnReload();
     }
 
+    /// <summary>
+    /// True if -d or --daemon in command line
+    /// </summary>
+    public bool IsDaemon { get; set; }
 
     private static bool IsDotNET(string? name) {
         if (name is null) return false;
@@ -447,7 +451,5 @@ public static partial class ConfigConstants {
     /// Devolve se foi executado com o wrapper de linha de comando "dotnet" (linux, normalmente)
     /// </summary>
     public const string IsDotnetCmd = "IsDotnetCmd";
-
-
 }
 

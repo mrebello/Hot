@@ -216,8 +216,9 @@ public static class AutoUpdate {
                 destination = hc.GetStringAsync(urlbase + "version").Result;
             } catch (Exception) {
             }
-            if (destination.IsEmpty())
+            if (destination.IsEmpty()) {
                 throw new Exception("Erro ao pegar a versão atual.");
+            }
 
             destination = destination.Item(1, "\r\n");   // descarta versão das libs
             string app_destination = destination.Item(1, "\t");
@@ -280,5 +281,4 @@ public static class AutoUpdate {
             throw;
         }
     }
-
 }

@@ -6,7 +6,9 @@
 /helpconfig | --helpconfig     -> list configurations files search paths
 /infos      | --infos          -> show runtime informations and exit
 
--d | --daemon | /d | /daemon   -> run as service
+/autoupdate | --autoupdate     -> publish itself to a running instance
+
+-d | --daemon | /d | /daemon   -> run as service (implicit when instaled as service)
 
 -v | --version | /v | /version -> show version
 
