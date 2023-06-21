@@ -174,8 +174,8 @@ public class HotConfiguration : IConfiguration {
             if (_configuration == null) {
                 string[] cmdline_args = Environment.GetCommandLineArgs();
                 // Primeiro parâmetro é o nome do executável, então, definir como "". Se for "dotnet xxx", zerar os 2 primeiros
-                cmdline_args[0] = "";
                 if (IsDotNET(cmdline_args[0])) cmdline_args[1] = "";
+                cmdline_args[0] = "";
                 //var executable_fullname = System.Environment.GetCommandLineArgs()[0];  // devolve o nome da DLL para aplicativos empacotados em arquivo único
                 var executable_fullname = System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName;
                 if (IsDotNET(executable_fullname) || IsIIS(executable_fullname))
@@ -201,6 +201,12 @@ public class HotConfiguration : IConfiguration {
                 asmHot_resource = typeof(HotConfiguration).Assembly;
                 asmHotAPI_resource = AppDomain.CurrentDomain.GetAssemblies().Where((i) => i.FullName?.StartsWith("HotAPI,") ?? false)?.FirstOrDefault();
                 var asm_name = asm_resource.GetName().Name;
+
+                Console.WriteLine("=======================");
+                Console.WriteLine($"asm_resource.FullName: {asm_resource.FullName}");
+                foreach (var r in asm_resource.GetManifestResourceNames()) { Console.WriteLine("  :" + r);  }
+                Console.WriteLine("=======================");
+
 
                 var appsttings_embeddedHot = asmHot_resource.GetManifestResourceStream("Hot.appsettings.json")
                     ?? throw new ConfigurationErrorsException("appsettings.json da HotLib não encontrado!");
