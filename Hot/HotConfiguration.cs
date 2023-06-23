@@ -202,12 +202,6 @@ public class HotConfiguration : IConfiguration {
                 asmHotAPI_resource = AppDomain.CurrentDomain.GetAssemblies().Where((i) => i.FullName?.StartsWith("HotAPI,") ?? false)?.FirstOrDefault();
                 var asm_name = asm_resource.GetName().Name;
 
-                Console.WriteLine("=======================");
-                Console.WriteLine($"asm_resource.FullName: {asm_resource.FullName}");
-                foreach (var r in asm_resource.GetManifestResourceNames()) { Console.WriteLine("  :" + r);  }
-                Console.WriteLine("=======================");
-
-
                 var appsttings_embeddedHot = asmHot_resource.GetManifestResourceStream("Hot.appsettings.json")
                     ?? throw new ConfigurationErrorsException("appsettings.json da HotLib não encontrado!");
                 Stream? appsttings_embeddedHotAPI = null;

@@ -64,7 +64,7 @@ abstract public class HttpServer : SelfHostedService {
 
     static string[] Prefixes_from_config() => Config[ConfigConstants.URLs]!.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);  // default in appsettings.json
     static string IgnorePrefix_from_config() => Config[ConfigConstants.IgnorePrefix] ?? "";
-    async void Config_Changed(object? state) {
+    async new void Config_Changed(object? state) { base.Config_Changed(state);
         var new_Prefixes = Prefixes_from_config();
         if (!prefixes.SequenceEqual(new_Prefixes)) {
             Log.LogWarning("Configuração de Prefixes foi alterada. Reiniciando Listener.");
