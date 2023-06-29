@@ -39,11 +39,11 @@ public sealed class emailLogger : ILogger {
         try {
             if (config.SmtpClient == null) {
                 config.SmtpClient = new SmtpClient() {
-                    Host = config.Host,
+                    Host = config.Host.ExpandConfig(),
                     Port = config.Port,
                 };
                 if (config.Username != null)
-                    config.SmtpClient.Credentials = new NetworkCredential(config.Username, config.Password);
+                    config.SmtpClient.Credentials = new NetworkCredential(config.Username?.ExpandConfig(), config.Password?.ExpandConfig());
                 if (config.SSL != null)
                     config.SmtpClient.EnableSsl = (bool)config.SSL;
             }
