@@ -313,6 +313,23 @@ public static class Functions {
         }
     }
 
+    /// <summary>
+    /// Test if a url (http/https) is online (with HEAD http command)
+    /// </summary>
+    /// <param name="url"></param>
+    /// <returns></returns>
+    public static async Task<bool> checkUrl(string url) {
+        Log.LogInformation("checking url: " + url);
+        try {
+            using (HttpClient client = new HttpClient()) {
+                client.Timeout = TimeSpan.FromSeconds(1);
+                var response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, url));
+                return response.IsSuccessStatusCode;
+            }
+        } catch {
+            return false;
+        }
+    }
 
     /// <summary>
     /// Cronometra o tempo de execução de A.
