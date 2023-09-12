@@ -66,6 +66,7 @@ public class BD_simples : IDisposable {
                 catch (Exception e) {
                     int er = (e as SqlException)?.Number ?? 0;
                     if (er == 4060 || er == 18456) tentativas = 1; // Gera o erro imediatamente para falhas de logon
+                    if (er == -2146893019) tentativas = 1; // Erro de certificado do servidor
                     if (--tentativas == 0) {
                         string m = String.Format("Erro ao tentar abrir conexão: {0}. connection string: {1} Exception: {2}", e.Message, sqlConnection.ConnectionString, e);
                         Log.LogError(e, m);
