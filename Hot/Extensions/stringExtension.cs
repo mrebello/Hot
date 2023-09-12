@@ -143,9 +143,30 @@ public static class stringExtension {
         int p;
         foreach (char c in s) {
             p = from.IndexOf(c);
-            if (p < 0) sb.Append(c); else sb.Append(to[p]);
+            if (p < 0) sb.Append(c); else if (p<to.Length) sb.Append(to[p]);
         }
         return sb.ToString();
+    }
+
+
+    /// <summary>
+    /// Remove all chars in charstoremove from string.
+    /// "teste de remocao".RemoveChars("eo") = "tst d rmca"
+    /// </summary>
+    /// <param name="charstoremove">string with char to remove</param>
+    /// <returns></returns>
+    public static string RemoveChars(this string s, string charstoremove) {
+        if (s == null) return "";
+        if (charstoremove == null) return s;
+
+        // modo mais rápido de acordo com https://makolyte.com/csharp-remove-a-set-of-characters-from-a-string/
+
+        var r = s;
+        foreach (char c in charstoremove) {
+            s = s.Replace(c.ToString(), string.Empty);
+        }
+        return s;
+
     }
 
 

@@ -168,6 +168,7 @@ public abstract class SelfHostedService : IHostedService {
 
         try {
             if (execute) {
+                Log.LogDebug(() => Log.Msg($"daemon: {daemon}, UserInteractive: {Environment.UserInteractive}, IsInputRedirected: {Console.IsInputRedirected}"));
                 if (!daemon && Environment.UserInteractive && !Console.IsInputRedirected) {
                     host.RunAsync();
                     try {

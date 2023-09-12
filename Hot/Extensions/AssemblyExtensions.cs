@@ -13,8 +13,13 @@ namespace Hot.Extensions {
         /// <returns></returns>
         public static Stream? GetAsmStream(this Assembly asm_resource,string sub_name) {
             // return asm_resource.GetManifestResourceStream(asm_resource.GetName().Name + "." + sub_name);
-            string name = asm_resource.GetManifestResourceNames().Single(p => p.EndsWith(sub_name));
-            return asm_resource.GetManifestResourceStream(name);
+            try {
+                string name = asm_resource.GetManifestResourceNames().Single(p => p.EndsWith(sub_name));
+                return asm_resource.GetManifestResourceStream(name);
+            } catch (Exception e) {
+                Log.LogDebug(() => Log.Msg("Erro ao ler arquivo interno "+asm_resource.GetName() + ":" + sub_name, e));
+                return null;
+            }
         }
     }
 }
