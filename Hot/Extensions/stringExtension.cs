@@ -1,4 +1,6 @@
-﻿namespace Hot.Extensions;
+﻿using Microsoft.IdentityModel.Tokens;
+
+namespace Hot.Extensions;
 
 public static class stringExtension {
     /// <summary>
@@ -357,5 +359,17 @@ public static class stringExtension {
             sb.Append(hash[i].ToString("x2"));
         }
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Put text before and after the string if the string is not empty or null
+    /// </summary>
+    /// <param name="input"></param>
+    /// <param name="before"></param>
+    /// <param name="after"></param>
+    /// <returns></returns>
+    public static string Envelop(this string input,string before = "", string after = "") {
+        if (input.IsNullOrEmpty()) return "";
+        return before + input + after;
     }
 }
