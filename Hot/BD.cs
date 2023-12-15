@@ -129,11 +129,11 @@ public class BD_simples : IDisposable {
     /// <param name="SQL"></param>
     /// <param name="obj"></param>
     /// <returns></returns>
-    public SqlCommand SQLCommand(SqlTransaction? transaction, string SQL, params object[] obj) {
+    public SqlCommand SQLCommand(SqlTransaction? transaction, string SQL, params object?[] obj) {
         var cmd = new SqlCommand(SQL, sqlConnectionOpened, transaction);
         int c = 1;
         foreach (var o in obj) {
-            SqlParameter p = new SqlParameter(c.ToString(), o);
+            SqlParameter p = new SqlParameter(c.ToString(), o ?? DBNull.Value);
             cmd.Parameters.Add(p);
             c++;
         }
@@ -170,7 +170,7 @@ public class BD_simples : IDisposable {
     /// <param name="SQL"></param>
     /// <param name="obj"></param>
     /// <returns></returns>
-    public SqlDataReader SQL(int timeout_seg, string SQL, params object[] obj) {
+    public SqlDataReader SQL(int timeout_seg, string SQL, params object?[] obj) {
         using (SqlCommand c = SQLCommand(null, SQL, obj)) {
             Log.LogInformation(() => HotLog.log.Log.Msg(LogInfo(c)));
             c.CommandTimeout = timeout_seg;
@@ -188,7 +188,7 @@ public class BD_simples : IDisposable {
     /// <param name="SQL"></param>
     /// <param name="obj"></param>
     /// <returns></returns>
-    public SqlDataReader SQL(string SQL, params object[] obj) {
+    public SqlDataReader SQL(string SQL, params object?[] obj) {
         using (SqlCommand c = SQLCommand(null, SQL, obj)) {
             Log.LogInformation(() => HotLog.log.Log.Msg(LogInfo(c)));
             return c.ExecuteReader();
@@ -204,7 +204,7 @@ public class BD_simples : IDisposable {
     /// <param name="SQL"></param>
     /// <param name="obj"></param>
     /// <returns></returns>
-    public object SQLScalar(string SQL, params object[] obj) {
+    public object SQLScalar(string SQL, params object?[] obj) {
         using (SqlCommand c = SQLCommand(null, SQL, obj)) {
             Log.LogInformation(() => HotLog.log.Log.Msg(LogInfo(c)));
             return c.ExecuteScalar();
@@ -220,7 +220,7 @@ public class BD_simples : IDisposable {
     /// <param name="SQL"></param>
     /// <param name="obj"></param>
     /// <returns></returns>
-    public int SQLCmd(string SQL, params object[] obj) {
+    public int SQLCmd(string SQL, params object?[] obj) {
         using (SqlCommand c = SQLCommand(null, SQL, obj)) {
             Log.LogInformation(() => HotLog.log.Log.Msg(LogInfo(c)));
             return c.ExecuteNonQuery();
@@ -241,7 +241,7 @@ public class BD_simples : IDisposable {
         public SqlTransaction? sqlTransaction { set; get; }
         public BD_simples? bd { set; get; }
 
-        public SqlDataReader SQL(string SQL, params object[] obj) {
+        public SqlDataReader SQL(string SQL, params object?[] obj) {
             ArgumentNullException.ThrowIfNull(bd, "BD nulo em transação.");
             using (SqlCommand c = bd.SQLCommand(sqlTransaction, SQL, obj)) {
                 bd.Log.LogInformation(() => HotLog.log.Log.Msg(LogInfo(c)));
@@ -249,7 +249,7 @@ public class BD_simples : IDisposable {
             }
         }
 
-        public object SQLScalar(string SQL, params object[] obj) {
+        public object SQLScalar(string SQL, params object?[] obj) {
             ArgumentNullException.ThrowIfNull(bd, "BD nulo em transação.");
             using (SqlCommand c = bd.SQLCommand(null, SQL, obj)) {
                 bd.Log.LogInformation(() => HotLog.log.Log.Msg(LogInfo(c)));
@@ -257,7 +257,7 @@ public class BD_simples : IDisposable {
             }
         }
 
-        public int SQLCmd(string SQL, params object[] obj) {
+        public int SQLCmd(string SQL, params object?[] obj) {
             ArgumentNullException.ThrowIfNull(bd, "BD nulo em transação.");
             using (SqlCommand c = bd.SQLCommand(null, SQL, obj)) {
                 bd.Log.LogInformation(() => HotLog.log.Log.Msg(LogInfo(c)));
