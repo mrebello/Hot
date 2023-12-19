@@ -71,7 +71,7 @@ State: {state?.ToString()}";
             }
         } catch (Exception e) {
             Log.LogError(EventIdErro_ao_enviar_email, e, "Erro ao tentar enviar email de erro. " +
-                $"From: {config.From}, To: {config.To}, SMTP: {config.SmtpClient?.Host}:{config.SmtpClient?.Port}");
+                $"From: {config.From.ExpandConfig()}, To: {config.To.ExpandConfig()}, SMTP: {config.SmtpClient?.Host}:{config.SmtpClient?.Port}");
         }
         //Console.WriteLine($"Estou logando: {formatter(state, exception)}");
 
