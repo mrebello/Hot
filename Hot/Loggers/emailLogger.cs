@@ -65,7 +65,7 @@ public sealed class emailLogger : ILogger {
 Exception: {exception?.ToString()}
 EventId: {eventId.ToString()}
 State: {state?.ToString()}";
-                using (MailMessage m = new MailMessage(config.From, config.To, subject, corpo)) {
+                using (MailMessage m = new MailMessage(config.From.ExpandConfig(), config.To.ExpandConfig(), subject, corpo)) {
                     config.SmtpClient.Send(m);
                 };
             }
