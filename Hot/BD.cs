@@ -230,16 +230,21 @@ public class BD_simples : IDisposable {
 
 
     public BDTransaction Transaction() {
-        return new BDTransaction() {
-            sqlTransaction = sqlConnection.BeginTransaction(),
-            bd = this
-        };
+        OpenConnection();
+        return new BDTransaction(this);
     }
 
 
     public class BDTransaction : IDisposable {
-        public SqlTransaction? sqlTransaction { set; get; }
-        public BD_simples? bd { set; get; }
+        public BDTransaction(BD_simples bd) {
+            this.bd = bd;
+            _sqlTransaction = bd.sqlConnection.BeginTransaction();
+        }
+
+        SqlTransaction _sqlTransaction;
+        public SqlTransaction sqlTransaction { get => _sqlTransaction; }
+
+        public BD_simples bd { set; get; }
 
         public SqlDataReader SQL(string SQL, params object?[] obj) {
             ArgumentNullException.ThrowIfNull(bd, "BD nulo em transação.");
@@ -251,7 +256,7 @@ public class BD_simples : IDisposable {
 
         public object SQLScalar(string SQL, params object?[] obj) {
             ArgumentNullException.ThrowIfNull(bd, "BD nulo em transação.");
-            using (SqlCommand c = bd.SQLCommand(null, SQL, obj)) {
+            using (SqlCommand c = bd.SQLCommand(sqlTransaction, SQL, obj)) {
                 bd.Log.LogInformation(() => HotLog.log.Log.Msg(LogInfo(c)));
                 return c.ExecuteScalar();
             }
@@ -259,12 +264,13 @@ public class BD_simples : IDisposable {
 
         public int SQLCmd(string SQL, params object?[] obj) {
             ArgumentNullException.ThrowIfNull(bd, "BD nulo em transação.");
-            using (SqlCommand c = bd.SQLCommand(null, SQL, obj)) {
+            using (SqlCommand c = bd.SQLCommand(sqlTransaction, SQL, obj)) {
                 bd.Log.LogInformation(() => HotLog.log.Log.Msg(LogInfo(c)));
                 return c.ExecuteNonQuery();
             }
         }
 
+        public void Commit() => sqlTransaction!.Commit();
 
         public void Dispose() {
             sqlTransaction?.Commit();
