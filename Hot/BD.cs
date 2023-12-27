@@ -110,7 +110,7 @@ public class BD_simples : IDisposable {
 
     public void Dispose() {
         CloseConnection();
-        // L.Dispose
+        //Log.Dispose();
     }
 
     ~BD_simples() {

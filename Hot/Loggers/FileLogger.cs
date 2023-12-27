@@ -37,7 +37,8 @@ public sealed class FileLogger : ILogger {
 
         try {
             string corpo =
-@$"Message: {formatter(state, exception)}
+@$"DateTime: {DateTime.Now}
+Message: {formatter(state, exception)}
 Exception: {exception?.ToString()}
 EventId: {eventId.ToString()}
 State: {state?.ToString()}";
