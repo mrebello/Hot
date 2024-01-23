@@ -24,7 +24,7 @@
         /// <param name="logger"></param>
         /// <param name="lambda_message">Gerador da mensagem do log</param>
         public static void LogDebug(this ILogger logger, Func<TLogMsg> lambda_message) {
-            if (logger.IsEnabled(LogLevel.Debug)) logger.Log(LogLevel.Debug, lambda_message().Get());
+            if (logger?.IsEnabled(LogLevel.Debug) ?? false) logger.Log(LogLevel.Debug, lambda_message().Get());
         }
         /// <summary>
         /// Grava uma mensagem de log, gerada apenas quando o nível do log é >= <b>Trace</b>.
