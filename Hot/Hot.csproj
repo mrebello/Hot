@@ -50,10 +50,10 @@ Inclui gerenciamento de configurações, logs (com log para email e arquivos), h
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0-preview5.24024.3" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0-preview.1.24080.9" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="9.0.0-preview.1.24080.9" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.0-preview.1.24080.9" />
-		<PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.0-preview.1.24080.9" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.0" />
+		<PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
 		<PackageReference Include="System.Resources.ResourceManager" Version="4.3.0" />
 		<PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.0-preview.1.24080.9" />
 	</ItemGroup>

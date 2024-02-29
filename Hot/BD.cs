@@ -275,7 +275,7 @@ public class BD_simples : IDisposable {
         public void Dispose() {
             sqlTransaction?.Commit();
             sqlTransaction?.Dispose();
-            bd = null;
+            bd.Dispose();
         }
     }
 }

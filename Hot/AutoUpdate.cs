@@ -181,7 +181,7 @@ public static class AutoUpdate {
                 size = f.Length;
                 f.Close();
             } catch (Exception e) {
-                Log.LogError("Erro ao salvar arquivo da atualização.", e);
+                Log.LogError(e,"Erro ao salvar arquivo da atualização.");
             }
 
             // Se salvou o arquivo corretamente
