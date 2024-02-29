@@ -88,6 +88,20 @@ public static class Functions {
         }
     }
 
+    /// <summary>
+    /// Append a text to a base text with a delimiter in end of base text.
+    /// If base text ends with the delimiter or is empty, do not add the delimiter.
+    /// </summary>
+    /// <param name="base_text"></param>
+    /// <param name="text_to_append"></param>
+    /// <param name="delimiter">Default is ";"</param>
+    /// <returns></returns>
+    static string AppendWithDelimiter(this string? base_text, string text_to_append, string delimiter = ";") {
+        if (base_text == null || base_text.Length == 0) { return text_to_append; }
+        if (base_text.EndsWith(delimiter, StringComparison.Ordinal)) { return base_text + text_to_append; }
+        return base_text + delimiter + text_to_append;
+    }
+
 
     /// <summary>
     /// Retorna com o conteúdo de um arquivo UTF-8 como string. Se arquivo não existir, retorna String.Empty
