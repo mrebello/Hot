@@ -52,7 +52,7 @@ public static class stringExtension {
     /// </summary>
     public static string After(this string s, string delimiter) {
         if (s == null || delimiter == null) return "";
-        int x = s.IndexOf(delimiter);
+        int x = s.IndexOf(delimiter, StringComparison.Ordinal);
         if (x >= 0) return s.Substring(x + delimiter.Length); else return "";
     }
 
@@ -62,7 +62,7 @@ public static class stringExtension {
     public static string Before(this string s, string delimiter) {
         if (s == null) return "";
         if (delimiter == null) return s;
-        int x = s.IndexOf(delimiter);
+        int x = s.IndexOf(delimiter, StringComparison.Ordinal);
         if (x >= 0) return s.Substring(0, x); else return s;
     }
 
@@ -108,22 +108,24 @@ public static class stringExtension {
     /// <returns></returns>
     public static string? RemoveRepeated(this string s, char c) {
         if (s == null) return null;
-        int p = s.IndexOf(c);
+        int p = s.IndexOf(c, StringComparison.Ordinal);
         int l = s.Length;
         if (p == -1) return s;
-        p++;
         var sb = new StringBuilder(s.Substring(0, p));
         while (p >= 0) {
+            sb.Append(c);
+            p++;
             while (p < l && s[p] == c) p++;
-            if (p < l - 1) {
-                int p2 = s.IndexOf(c, p + 1);
-                sb.Append(s.Substring(p, (p2 == -1 ? l : p2) - p + 1));
-                p = p2;
+            if (p >= l) break;
+            // próximo não é
+            int p2 = s.IndexOf(c, p + 1);
+            if (p2 >= 0) {
+                sb.Append(s.Substring(p, p2 - p));
+                p = p2 + 1;
+            } else {
+                sb.Append(s.Substring(p));
+                break;
             }
-            else {
-                p = -1;
-            }
-            if (p == -1 && s[l - 1] != c) sb.Append(s[l - 1]);
         }
         return sb.ToString();
     }
