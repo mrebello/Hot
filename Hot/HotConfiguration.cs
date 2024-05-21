@@ -164,9 +164,9 @@ public class HotConfiguration : IConfiguration {
         }
     }
     public void OnReload() => onlineProvider.OnReload();
-    IEnumerable<IConfigurationSection> IConfiguration.GetChildren() => _configuration.GetChildren();
-    IChangeToken IConfiguration.GetReloadToken() => _configuration.GetReloadToken();
-    IConfigurationSection IConfiguration.GetSection(string key) => _configuration.GetSection(key);
+    public IEnumerable<IConfigurationSection> GetChildren() => _configuration.GetChildren();
+    public IChangeToken GetReloadToken() => _configuration.GetReloadToken();
+    public IConfigurationSection GetSection(string key) => _configuration.GetSection(key);
 
 #pragma warning disable CS8618 // O campo não anulável precisa conter um valor não nulo ao sair do construtor. Considere declará-lo como anulável.
     public HotConfiguration() {
