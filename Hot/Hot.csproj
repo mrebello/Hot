@@ -57,7 +57,7 @@ Inclui gerenciamento de configurações, logs (com log para email e arquivos), h
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0-preview.5.24306.7" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="9.0.0-preview.5.24306.7" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.0-preview.5.24306.7" />
-		<PackageReference Include="NSwag.ApiDescription.Client" Version="14.0.7">
+		<PackageReference Include="NSwag.ApiDescription.Client" Version="14.1.0">
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
