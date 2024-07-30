@@ -34,6 +34,20 @@ namespace Hot.Extensions {
         }
 
         /// <summary>
+        /// Retorna objeto convertido para decimal, checando se é DBNull também. Caso seja null ou DBNull, retorna null;
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        public static decimal? ToDec(this object v)
+        {
+            if (v is null)
+                return null;
+            if (v is DBNull)
+                return null;
+            return (decimal)v;
+        }
+
+        /// <summary>
         /// Transforma o objeto em uma string para visualização, listando todas as propriedades. (Usar para depuração)
         /// </summary>
         /// <param name="value">Objeto a ser visualizado</param>
