@@ -38,7 +38,7 @@ namespace Hot.Extensions {
         /// </summary>
         /// <param name="v"></param>
         /// <returns></returns>
-        public static decimal? ToDec(this object v)
+        public static decimal? ToDecimal(this object v)
         {
             if (v is null)
                 return null;
