@@ -229,13 +229,13 @@ public class HotConfiguration : IConfiguration {
                 string env = preconf["Environment"] ?? Environments.Production;
 
                 preconf[ConfigConstants.Environment] = env;
-                preconf[ConfigConstants.IsDevelopment] = (env == Environments.Development).ToStr();
+                preconf[ConfigConstants.IsDevelopment] = (env == Environments.Development).ToString();
                 preconf[ConfigConstants.AppName] ??= (executable_name ?? asm_name ?? "").TrimEnd(".exe");
                 preconf[ConfigConstants.Version] = asm_resource.GetName().Version?.ToString();
                 preconf[ConfigConstants.ExecutableFullName] = executable_fullname;
                 preconf[ConfigConstants.ExecutablePath] = executable_path;
                 preconf[ConfigConstants.ExecutableName] = executable_name;
-                preconf[ConfigConstants.IsDotnetCmd] = IsDotnetCmd.ToStr();
+                preconf[ConfigConstants.IsDotnetCmd] = IsDotnetCmd.ToString();
 
                 // Includes definido na pré-configuração
                 var includeItems = preconf.GetSection("Includes").Get<List<string>>();
