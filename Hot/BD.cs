@@ -11,11 +11,12 @@ public class BD_simples : IDisposable {
     /// <summary>
     /// Cria instância baseada na connection string de nome <i>config_name</i> das configurações.
     /// Caso config_name seja nulo/vazio, usa 'DefaultConnection'
+    /// Troca @user@ e @pass@ por user e password, se fornecidos na string de conexão.
     /// </summary>
     /// <param name="config_name">Nome da seção ConectionStrings nas configurações</param>
     /// <param name="isSQLSERVER">Se true, adiciona MultipleActiveResultSets=True e Application Name=Config["AppName"] caso não existam.</param>
     /// <exception cref="ConfigurationErrorsException">Erro caso conection string não esteja configurada.</exception>
-    public BD_simples(string? config_name = null, bool isSqlserver = true) {
+    public BD_simples(string? config_name = null, bool isSqlserver = true, string user="", string password="") {
         string name = config_name ?? "";
         if (name.Length == 0) name = "DefaultConnection";
         string connectionString = Config.GetConnectionString(name)?.Trim() ?? "";
@@ -23,7 +24,7 @@ public class BD_simples : IDisposable {
             throw new ConfigurationErrorsException($"ConnectionStrings '{name}' deve estar configurado em appsettings.json.");
         }
 
-        connectionString = connectionString.ExpandConfig();
+        connectionString = connectionString.ExpandConfig().Replace("@user@",user).Replace("@pass@",password);
 
         if (isSqlserver) {
             if (!connectionString.Contains("MultipleActiveResultSets", StringComparison.OrdinalIgnoreCase)) {
