@@ -16,7 +16,7 @@ public class BD_simples : IDisposable {
     /// <param name="config_name">Nome da seção ConectionStrings nas configurações</param>
     /// <param name="isSQLSERVER">Se true, adiciona MultipleActiveResultSets=True e Application Name=Config["AppName"] caso não existam.</param>
     /// <exception cref="ConfigurationErrorsException">Erro caso conection string não esteja configurada.</exception>
-    public BD_simples(string? config_name = null, bool isSqlserver = true, string user="", string password="") {
+    public BD_simples(string? config_name = null, bool isSqlserver = true, string user = "", string password = "") {
         string name = config_name ?? "";
         if (name.Length == 0) name = "DefaultConnection";
         string connectionString = Config.GetConnectionString(name)?.Trim() ?? "";
@@ -24,7 +24,7 @@ public class BD_simples : IDisposable {
             throw new ConfigurationErrorsException($"ConnectionStrings '{name}' deve estar configurado em appsettings.json.");
         }
 
-        connectionString = connectionString.ExpandConfig().Replace("@user@",user).Replace("@pass@",password);
+        connectionString = connectionString.ExpandConfig().Replace("@user@", user).Replace("@pass@", password);
 
         if (isSqlserver) {
             if (!connectionString.Contains("MultipleActiveResultSets", StringComparison.OrdinalIgnoreCase)) {
@@ -38,10 +38,12 @@ public class BD_simples : IDisposable {
         sqlConnection = new SqlConnection(connectionString);
     }
 
-    public SqlConnection sqlConnectionOpened {  get {
+    public SqlConnection sqlConnectionOpened {
+        get {
             OpenConnection();
             return sqlConnection;
-        } }
+        }
+    }
 
 
     private readonly object OpenConnection_lock = new object();
@@ -63,8 +65,7 @@ public class BD_simples : IDisposable {
                     if (sqlConnection.State == ConnectionState.Broken) sqlConnection.Close();
                     sqlConnection.Open();    // se não abrir, vai pro catch
                     break;
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     int er = (e as SqlException)?.Number ?? 0;
                     if (er == 4060 || er == 18456) tentativas = 1; // Gera o erro imediatamente para falhas de logon
                     if (er == -2146893019) tentativas = 1; // Erro de certificado do servidor
@@ -72,8 +73,7 @@ public class BD_simples : IDisposable {
                         string m = String.Format("Erro ao tentar abrir conexão: {0}. connection string: {1} Exception: {2}", e.Message, sqlConnection.ConnectionString, e);
                         Log.LogError(e, m);
                         throw new Exception(m, e);
-                    }
-                    else {
+                    } else {
                         Log.LogWarning(e.Message + " em: " + e.StackTrace);
                         Thread.Sleep(1000);
                     }
@@ -93,14 +93,12 @@ public class BD_simples : IDisposable {
                 try {
                     sqlConnection.Close();
                     break;
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     if (--tentativas == 0) {
                         string m = String.Format("Erro ao tentar fechar a conexão: {0}. Stack: {1} Exception: {2}", sqlConnection.ConnectionString, e.StackTrace, e.Message);
-                        Log.LogError(m);
+                        Log.LogError(e, m);
                         throw new Exception(m);
-                    }
-                    else {
+                    } else {
                         Log.LogWarning(e.Message + " em: " + e.StackTrace);
                         Thread.Sleep(1000);
                     }

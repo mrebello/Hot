@@ -181,7 +181,7 @@ public static class AutoUpdate {
                 size = f.Length;
                 f.Close();
             } catch (Exception e) {
-                Log.LogError(e,"Erro ao salvar arquivo da atualização.");
+                Log.LogError(e,"Erro ao salvar arquivo da atualização \" + tmpfile + \"." + e.Message);
             }
 
             // Se salvou o arquivo corretamente

@@ -103,7 +103,7 @@ abstract public class HttpServer : SelfHostedService {
                     foreach (var s in prefixes) {
                         msg += $"netsh http add urlacl url={s} user=xxxxxx" + Environment.NewLine;
                     }
-                    Log.LogError(msg);
+                    Log.LogError(ex, msg);
                 } else {
                     Log.LogError("Erro ao iniciar a escuta na porta.");
                 }
