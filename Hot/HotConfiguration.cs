@@ -237,12 +237,14 @@ public class HotConfiguration : IConfiguration {
                 preconf[ConfigConstants.ExecutableName] = executable_name;
                 preconf[ConfigConstants.IsDotnetCmd] = IsDotnetCmd.ToString();
 
-                // Includes definido na pré-configuração
-                var includeItems = preconf.GetSection("Includes").Get<List<string>>();
+                // Includes definido na pré-configuração -> checa se formato velho
+                // (não é mais como array de strings, e sim como uma string separada por ";"s
+                if (preconf.GetSection("Includes").Get<List<string>>() is not null)
+                    throw new ConfigurationErrorsException("Includes deve ser definido como string, não como array de strings.");
+
+                var includeItems = (preconf.GetSection("Includes").Get<string>() ?? "").Split(';',StringSplitOptions.RemoveEmptyEntries);
 
                 #endregion
-
-
                 var confBuilder = new ConfigurationBuilder();
                 confBuilder.SetBasePath(Directory.GetCurrentDirectory());
 
