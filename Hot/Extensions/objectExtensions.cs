@@ -5,11 +5,11 @@ namespace Hot.Extensions {
     /// Extensões para o tipo object
     /// </summary>
     public static class objectExtensions {
+        
         /// <summary>
         /// Retorna objeto convertido para o tipo, checando se é DBNull também. Caso seja null ou DBNull, retorna o valor default do tipo. usar To<int?>() para retornar null no caso de int?;
         /// </summary>
         /// <param name="v"></param>
-        /// <returns></returns>
         public static T? To<T>(this object v) {
             if (v is null)
                 return default;
@@ -23,7 +23,6 @@ namespace Hot.Extensions {
         /// Retorna objeto convertido para o tipo, checando se é DBNull também. Caso seja null ou DBNull, retorna o valor default;
         /// </summary>
         /// <param name="v"></param>
-        /// <returns></returns>
         public static T To<T>(this object v, T default_value) {
             if (v is null)
                 return default_value;
