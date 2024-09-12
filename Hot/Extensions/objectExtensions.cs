@@ -4,7 +4,7 @@ namespace Hot.Extensions {
     /// <summary>
     /// Extensões para o tipo object
     /// </summary>
-    public static class objectExtensions {
+    public static class ObjectExtensions {
         
         /// <summary>
         /// Retorna objeto convertido para o tipo, checando se é DBNull também. Caso seja null ou DBNull, retorna o valor default do tipo. usar To<int?>() para retornar null no caso de int?;
@@ -43,11 +43,11 @@ namespace Hot.Extensions {
             if (depth > 3)
                 return "...";
 
-            StringBuilder result = new StringBuilder();
+            StringBuilder result = new();
 
             string spaces = "|   ";
             string indent = new StringBuilder().Insert(0, spaces, depth).ToString();
-            string displayValue = String.Empty;
+            string displayValue; // = String.Empty;
 
             try {
                 if (value != null) {
