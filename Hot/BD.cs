@@ -1,12 +1,13 @@
 ﻿namespace Hot;
 
-
 /// <summary>
 /// Implementa controle de conexão ADO.NET sobre uma conexão
 /// </summary>
 public class BD_simples : IDisposable {
     public SqlConnection sqlConnection { get; internal set; }
     ILogger Log = LogCreate("Hot.BD");
+
+    private IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
 
     /// <summary>
     /// Cria instância baseada na connection string de nome <i>config_name</i> das configurações.
@@ -278,5 +279,18 @@ public class BD_simples : IDisposable {
             sqlTransaction?.Dispose();
             bd.Dispose();
         }
+    }
+
+
+    string CacheKey(string sql, object?[] parameters) {
+        return sql + string.Join(",", parameters);
+    }
+
+    public object SQLScalar(MemoryCacheEntryOptions cacheOptions, string SQL, params object?[] obj) {
+        string cacheKey = CacheKey(SQL, obj);
+        return _cache.GetOrCreate(cacheKey, e => {
+            e.SetOptions(cacheOptions);
+            return SQLScalar(SQL, obj);
+        })!;
     }
 }
