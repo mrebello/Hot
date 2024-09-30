@@ -271,6 +271,8 @@ public class BD_simples : IDisposable {
 
         public void Commit() => sqlTransaction!.Commit();
 
+        public void Rollback() => sqlTransaction!.Rollback();
+
         public void Dispose() {
             sqlTransaction?.Commit();
             sqlTransaction?.Dispose();
