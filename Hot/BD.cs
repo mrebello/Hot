@@ -293,4 +293,26 @@ public class BD_simples : IDisposable {
             return SQLScalar(SQL, obj);
         })!;
     }
+
+
+    public DataTableReader SQL(MemoryCacheEntryOptions cacheOptions, int timeout_seg, string SQL_, params object?[] obj) {
+        string cacheKey = CacheKey(SQL_, obj);
+        return _cache.GetOrCreate(cacheKey, e => {
+            e.SetOptions(cacheOptions);
+            var dt = new DataTable();
+            dt.Load(SQL(timeout_seg, SQL_, obj));
+            return dt;
+        })!.CreateDataReader();
+    }
+
+    public DataTableReader SQL(MemoryCacheEntryOptions cacheOptions, string SQL_, params object?[] obj) {
+        string cacheKey = CacheKey(SQL_, obj);
+        return _cache.GetOrCreate(cacheKey, e => {
+            e.SetOptions(cacheOptions);
+            var dt = new DataTable();
+            dt.Load(SQL(SQL_, obj));
+            return dt;
+        })!.CreateDataReader();
+    }
+
 }
