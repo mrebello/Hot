@@ -1,4 +1,6 @@
-﻿namespace Hot;
+﻿using System.Net.NetworkInformation;
+
+namespace Hot;
 
 /// <summary>
 /// Implementa controle de conexão ADO.NET sobre uma conexão
@@ -121,8 +123,9 @@ public class BD_simples : IDisposable {
 
     /// <summary>
     /// Monta um SqlCommand a partir do SQL e parâmetros. Os parâmetros são numerados a partir de 1.
+    /// Parâmetro pode ter o nome e o nome tipo do parâmetro (no caso de parâmetro tabela)
     /// <code>
-    /// SqlCmd( connection, "SELECT @1 + @2", 1, 2 );
+    /// SqlCmd( connection, "SELECT @1 + @2 + @c", 1, 2, ("c", 5), ("d", x_DataTable, "NomeTipoSQL") );
     /// </code>
     /// </summary>
     /// <param name="sqlConnection"></param>
@@ -131,9 +134,40 @@ public class BD_simples : IDisposable {
     /// <returns></returns>
     public SqlCommand SQLCommand(SqlTransaction? transaction, string SQL, params object?[] obj) {
         var cmd = new SqlCommand(SQL, sqlConnectionOpened, transaction);
+        
+        // Se não tem espaço, assume que é storeprocedure
+        if (!SQL.Contains(' ')) cmd.CommandType = CommandType.StoredProcedure;
+
         int c = 1;
         foreach (var o in obj) {
-            SqlParameter p = new SqlParameter(c.ToString(), o ?? DBNull.Value);
+            SqlParameter p;
+            if (o == null) {
+                // Parâmetro simples nulo
+                p = new SqlParameter(c.ToString(), DBNull.Value);
+            } else {
+                Type t = o.GetType();
+                if (t.IsGenericType && (t.GetGenericTypeDefinition() == typeof(ValueTuple<,>))) {
+
+                    // Tupla 2 valores, = (nome_parametro, valor)   ---> conversão da Tupla por (o is ValueTuple<string,object> vt) não funcionou
+                    var fields = t.GetFields(BindingFlags.Instance | BindingFlags.Public);
+                    p = new SqlParameter((string?)fields[0].GetValue(o), fields[1].GetValue(o));
+
+                } else if (t.IsGenericType && (t.GetGenericTypeDefinition() == typeof(ValueTuple<,,>))) {
+
+                    // Tupla 3 valores, = (nome_parametro, valor, nome_tipo)
+                    var fields = t.GetFields(BindingFlags.Instance | BindingFlags.Public);
+                    p = new SqlParameter((string?)fields[0].GetValue(o), fields[1].GetValue(o));
+                    p.SqlDbType = SqlDbType.Structured;
+                    p.TypeName = "IPREJUN_Contrib_PorVerba";
+
+                } else {
+                    p = new SqlParameter(c.ToString(), o ?? DBNull.Value);
+                }
+
+                if (t.IsSubclassOf(typeof(DataTable))) {
+                    throw new Exception("Parametros tipo tabela devem ter o nome junto. Use Sqlxxx(\"sql\",p1,(\"@nome_parametro\",valor_tabela,nome_tipo_no_sql),p3,..)");
+                }
+            }
             cmd.Parameters.Add(p);
             c++;
         }
@@ -164,7 +198,7 @@ public class BD_simples : IDisposable {
     /// <summary>
     /// Monta um SqlCommand a partir do SQL e parâmetros, com timeout setado no comando. Os parâmetros são numerados a partir de 1.
     /// <code>
-    /// SqlCmd(   connection, "SELECT @1 + @2", 1, 2 );
+    /// SqlCmd( connection, "SELECT @1 + @2 + @c", 1, 2, ("c", 5), ("d", x_DataTable, "NomeTipoSQL") );
     /// </code>
     /// </summary>
     /// <param name="SQL"></param>
@@ -180,9 +214,9 @@ public class BD_simples : IDisposable {
 
 
     /// <summary>
-    /// Monta um SqlCommand a partir do SQL e parâmetros. Os parâmetros são numerados a partir de 1.
+    /// Executa um comando SQL com parâmetros e retorna o SqlDataReader do resultado. Os parâmetros simples são numerados a partir de 1.
     /// <code>
-    /// SqlCmd( connection, "SELECT @1 + @2", 1, 2 );
+    /// SqlCmd( connection, "SELECT @1 + @2 + @c", 1, 2, ("c", 5), ("d", x_DataTable, "NomeTipoSQL") );
     /// </code>
     /// </summary>
     /// <param name="SQL"></param>
@@ -196,9 +230,9 @@ public class BD_simples : IDisposable {
     }
 
     /// <summary>
-    /// Monta um SqlCommand a partir do SQL e parâmetros. Os parâmetros são numerados a partir de 1.
+    /// Executa um comando SQL com parâmetros e retorna o valor da primeira coluna da primeira linha. Os parâmetros simples são numerados a partir de 1.
     /// <code>
-    /// SqlCmd( connection, "SELECT @1 + @2", 1, 2 );
+    /// SqlCmd( connection, "SELECT @1 + @2 + @c", 1, 2, ("c", 5), ("d", x_DataTable, "NomeTipoSQL") );
     /// </code>
     /// </summary>
     /// <param name="SQL"></param>
@@ -212,9 +246,9 @@ public class BD_simples : IDisposable {
     }
 
     /// <summary>
-    /// Monta um SqlCommand a partir do SQL e parâmetros. Os parâmetros são numerados a partir de 1.
+    /// Executa um comando SQL com parâmetros e retorna o número de linhas afetadas. Os parâmetros simples são numerados a partir de 1.
     /// <code>
-    /// SqlCmd( connection, "SELECT @1 + @2", 1, 2 );
+    /// SqlCmd( connection, "SELECT @1 + @2 + @c", 1, 2, ("c", 5), ("d", x_DataTable, "NomeTipoSQL") );
     /// </code>
     /// </summary>
     /// <param name="SQL"></param>
@@ -246,6 +280,15 @@ public class BD_simples : IDisposable {
 
         public BD_simples bd { set; get; }
 
+        /// <summary>
+        /// Executa um comando SQL dentro da transação com parâmetros, e devolve o SqlDataReader do resultado. Os parâmetros simples são numerados a partir de 1.
+        /// <code>
+        /// SQLScalar("SELECT @1 + @2 + @c", 1, 2, ("c", 5), ("d", x_DataTable, "NomeTipoSQL") );
+        /// </code>
+        /// </summary>
+        /// <param name="SQL"></param>
+        /// <param name="obj"></param>
+        /// <returns></returns>
         public SqlDataReader SQL(string SQL, params object?[] obj) {
             ArgumentNullException.ThrowIfNull(bd, "BD nulo em transação.");
             using (SqlCommand c = bd.SQLCommand(sqlTransaction, SQL, obj)) {
@@ -254,6 +297,15 @@ public class BD_simples : IDisposable {
             }
         }
 
+        /// <summary>
+        /// Executa um comando SQL dentro da transação com parâmetros, e devolve a primeira coluna da primeira linha. Os parâmetros simples são numerados a partir de 1.
+        /// <code>
+        /// SQLScalar("SELECT @1 + @2 + @c", 1, 2, ("c", 5), ("d", x_DataTable, "NomeTipoSQL") );
+        /// </code>
+        /// </summary>
+        /// <param name="SQL"></param>
+        /// <param name="obj"></param>
+        /// <returns></returns>
         public object SQLScalar(string SQL, params object?[] obj) {
             ArgumentNullException.ThrowIfNull(bd, "BD nulo em transação.");
             using (SqlCommand c = bd.SQLCommand(sqlTransaction, SQL, obj)) {
@@ -262,6 +314,15 @@ public class BD_simples : IDisposable {
             }
         }
 
+        /// <summary>
+        /// Executa um comando SQL dentro da transação com parâmetros, e devolve o número de linhas afetadas. Os parâmetros simples são numerados a partir de 1.
+        /// <code>
+        /// SQLScalar("SELECT @1 + @2 + @c", 1, 2, ("c", 5), ("d", x_DataTable, "NomeTipoSQL") );
+        /// </code>
+        /// </summary>
+        /// <param name="SQL"></param>
+        /// <param name="obj"></param>
+        /// <returns></returns>
         public int SQLCmd(string SQL, params object?[] obj) {
             ArgumentNullException.ThrowIfNull(bd, "BD nulo em transação.");
             using (SqlCommand c = bd.SQLCommand(sqlTransaction, SQL, obj)) {
