@@ -336,8 +336,11 @@ public class BD_simples : IDisposable {
         public void Rollback() => sqlTransaction!.Rollback();
 
         public void Dispose() {
-            sqlTransaction?.Commit();
-            sqlTransaction?.Dispose();
+            try {
+                sqlTransaction?.Commit();
+                sqlTransaction?.Dispose();
+            } catch (Exception) {
+            }
             bd.Dispose();
         }
     }
