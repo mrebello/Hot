@@ -9,6 +9,11 @@ public class BD_simples : IDisposable {
     public SqlConnection sqlConnection { get; internal set; }
     ILogger Log = LogCreate("Hot.BD");
 
+    /// <summary>
+    /// Função a executar ao fazer (ou refazer) uma conexão com o banco
+    /// </summary>
+    public Action? OnConnect = null;
+
     private IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
 
     /// <summary>
@@ -66,8 +71,11 @@ public class BD_simples : IDisposable {
                         return true;
                     }
                     if (sqlConnection.State == ConnectionState.Broken) sqlConnection.Close();
+
                     sqlConnection.Open();    // se não abrir, vai pro catch
-                    break;
+                    if (OnConnect != null) OnConnect.Invoke();
+
+                    break; // se abrir, sai do while
                 } catch (Exception e) {
                     int er = (e as SqlException)?.Number ?? 0;
                     if (er == 4060 || er == 18456) tentativas = 1; // Gera o erro imediatamente para falhas de logon
@@ -232,7 +240,7 @@ public class BD_simples : IDisposable {
     /// <summary>
     /// Executa um comando SQL com parâmetros e retorna o valor da primeira coluna da primeira linha. Os parâmetros simples são numerados a partir de 1.
     /// <code>
-    /// SqlCmd( connection, "SELECT @1 + @2 + @c", 1, 2, ("c", 5), ("d", x_DataTable, "NomeTipoSQL") );
+    /// SqlCmd( connection, "SELECT @1 + @2 + @c FROM @d", 1, 2, ("c", 5), ("d", x_DataTable, "NomeTipoSQL") );
     /// </code>
     /// </summary>
     /// <param name="SQL"></param>
