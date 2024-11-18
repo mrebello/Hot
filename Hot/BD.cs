@@ -158,7 +158,7 @@ public class BD_simples : IDisposable {
 
                     // Tupla 2 valores, = (nome_parametro, valor)   ---> conversão da Tupla por (o is ValueTuple<string,object> vt) não funcionou
                     var fields = t.GetFields(BindingFlags.Instance | BindingFlags.Public);
-                    p = new SqlParameter((string?)fields[0].GetValue(o), fields[1].GetValue(o));
+                    p = new SqlParameter((string?)fields[0].GetValue(o), fields[1].GetValue(o) ?? DBNull.Value);
 
                 } else if (t.IsGenericType && (t.GetGenericTypeDefinition() == typeof(ValueTuple<,,>))) {
 
