@@ -17,6 +17,24 @@ public class BD_simples : IDisposable {
     private IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
 
     /// <summary>
+    /// Pool de conexões criadas via clonagem para transações paralelas, para que sejam encerradas no Dispose()
+    /// </summary>
+    List<SqlConnection> ConnectionPool = new List<SqlConnection>();
+    object ConnectionPoolLock = new object();
+    /// <summary>
+    /// Clona a conexão para fazer transações paralelas
+    /// </summary>
+    /// <param name="origem"></param>
+    private BD_simples(BD_simples origem) {
+        OnConnect = origem.OnConnect;
+        Log = origem.Log;
+        lock (ConnectionPoolLock) {
+            sqlConnection = new SqlConnection(origem.sqlConnection.ConnectionString);
+            origem.ConnectionPool.Add(sqlConnection);
+        }
+    }
+
+    /// <summary>
     /// Cria instância baseada na connection string de nome <i>config_name</i> das configurações.
     /// Caso config_name seja nulo/vazio, usa 'DefaultConnection'
     /// Troca @user@ e @pass@ por user e password, se fornecidos na string de conexão.
@@ -73,7 +91,12 @@ public class BD_simples : IDisposable {
                     if (sqlConnection.State == ConnectionState.Broken) sqlConnection.Close();
 
                     sqlConnection.Open();    // se não abrir, vai pro catch
-                    if (OnConnect != null) OnConnect.Invoke();
+                    Log.LogDebug("Abriu conexão. " + sqlConnection.ConnectionString);
+
+                    if (OnConnect != null) {
+                        Log.LogDebug("Invocando OnConnect. " + sqlConnection.ConnectionString);
+                        OnConnect.Invoke();
+                    }
 
                     break; // se abrir, sai do while
                 } catch (Exception e) {
@@ -120,7 +143,8 @@ public class BD_simples : IDisposable {
 
     public void Dispose() {
         CloseConnection();
-        //Log.Dispose();
+        foreach (var c in ConnectionPool) { c.Dispose(); }
+        Log.LogDebug("Fechando conexão. " + sqlConnection.ConnectionString);
     }
 
     ~BD_simples() {
@@ -142,7 +166,7 @@ public class BD_simples : IDisposable {
     /// <returns></returns>
     public SqlCommand SQLCommand(SqlTransaction? transaction, string SQL, params object?[] obj) {
         var cmd = new SqlCommand(SQL, sqlConnectionOpened, transaction);
-        
+
         // Se não tem espaço, assume que é storeprocedure
         if (!SQL.Contains(' ')) cmd.CommandType = CommandType.StoredProcedure;
 
@@ -166,7 +190,7 @@ public class BD_simples : IDisposable {
                     var fields = t.GetFields(BindingFlags.Instance | BindingFlags.Public);
                     p = new SqlParameter((string?)fields[0].GetValue(o), fields[1].GetValue(o));
                     p.SqlDbType = SqlDbType.Structured;
-                    p.TypeName = "IPREJUN_Contrib_PorVerba";
+                    p.TypeName = (string) fields[2].GetValue(o)!;
 
                 } else {
                     p = new SqlParameter(c.ToString(), o ?? DBNull.Value);
@@ -272,8 +296,11 @@ public class BD_simples : IDisposable {
 
 
     public BDTransaction Transaction() {
-        OpenConnection();
-        return new BDTransaction(this);
+        // transações são iniciadas em outra conexão para permitir transações paralelas.
+                //  código velho: } catch (InvalidOperationException ex) when (ex.HResult == -2146233079) {  // Transações paralelas
+        var c2 = new BD_simples(this);
+        c2.OpenConnection();
+        return new BDTransaction(c2);
     }
 
 
@@ -347,6 +374,7 @@ public class BD_simples : IDisposable {
             try {
                 sqlTransaction?.Commit();
                 sqlTransaction?.Dispose();
+                sqlTransaction?.Connection?.Dispose();
             } catch (Exception) {
             }
             bd.Dispose();
