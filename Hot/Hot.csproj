@@ -50,21 +50,12 @@ Inclui gerenciamento de configurações, logs (com log para email e arquivos), h
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
-		<PackageReference Include="Microsoft.Extensions.ApiDescription.Client" Version="8.0.10">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0-preview.5.24306.7" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="9.0.0-preview.5.24306.7" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.0-preview.5.24306.7" />
-		<PackageReference Include="NSwag.ApiDescription.Client" Version="14.1.0">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.0-preview.5.24306.7" />
-		<PackageReference Include="System.Resources.ResourceManager" Version="4.3.0" />
-		<PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.0-preview.5.24306.7" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.0" />
+		<PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.0" />
+		<PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
