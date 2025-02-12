@@ -325,12 +325,27 @@ public class BD_simples : IDisposable {
         /// <param name="obj"></param>
         /// <returns></returns>
         public SqlDataReader SQL(string SQL, params object?[] obj) {
+            return this.SQL(-1, SQL, obj);
+        }
+
+        /// <summary>
+        /// Monta um SqlCommand a partir do SQL e parâmetros, com timeout setado no comando. Os parâmetros são numerados a partir de 1.
+        /// <code>
+        /// SqlCmd( 60, connection, "SELECT @1 + @2 + @c", 1, 2, ("c", 5), ("d", x_DataTable, "NomeTipoSQL") );
+        /// </code>
+        /// </summary>
+        /// <param name="SQL"></param>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public SqlDataReader SQL(int timeout_seg, string SQL, params object?[] obj) {
             ArgumentNullException.ThrowIfNull(bd, "BD nulo em transação.");
             using (SqlCommand c = bd.SQLCommand(sqlTransaction, SQL, obj)) {
                 bd.Log.LogInformation(() => HotLog.log.Log.Msg(LogInfo(c)));
+                if (timeout_seg>0) c.CommandTimeout = timeout_seg;
                 return c.ExecuteReader();
             }
         }
+
 
         /// <summary>
         /// Executa um comando SQL dentro da transação com parâmetros, e devolve a primeira coluna da primeira linha. Os parâmetros simples são numerados a partir de 1.
@@ -365,6 +380,7 @@ public class BD_simples : IDisposable {
                 return c.ExecuteNonQuery();
             }
         }
+
 
         public void Commit() => sqlTransaction!.Commit();
 
