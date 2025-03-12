@@ -1,4 +1,5 @@
-﻿using System.Net.NetworkInformation;
+﻿using Microsoft.Data.SqlClient;
+using System.Net.NetworkInformation;
 
 namespace Hot;
 
@@ -260,6 +261,24 @@ public class BD_simples : IDisposable {
             return c.ExecuteReader();
         }
     }
+
+    /// <summary>
+    /// Monta um SqlCommand a partir do SQL e parâmetros, com timeout setado no comando. Os parâmetros são numerados a partir de 1.
+    /// <code>
+    /// SqlCmd( 60, connection, "SELECT @1 + @2 + @c", 1, 2, ("c", 5), ("d", x_DataTable, "NomeTipoSQL") );
+    /// </code>
+    /// </summary>
+    /// <param name="SQL"></param>
+    /// <param name="obj"></param>
+    /// <returns></returns>
+    public async Task<SqlDataReader> SQLAsync(int timeout_seg, string SQL, params object?[] obj) {
+        using (SqlCommand c = SQLCommand(null, SQL, obj)) {
+            Log.LogInformation(() => HotLog.log.Log.Msg(LogInfo(c)));
+            if (timeout_seg > 0) c.CommandTimeout = timeout_seg;
+            return await c.ExecuteReaderAsync();
+        }
+    }
+
 
     /// <summary>
     /// Executa um comando SQL com parâmetros e retorna o valor da primeira coluna da primeira linha. Os parâmetros simples são numerados a partir de 1.
